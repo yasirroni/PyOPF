@@ -22,6 +22,13 @@ jobs:
           pip install -U setuptools wheel
           pip install -e .
           pip install -r requirements.txt
+      - name: Add conda to system path
+        run: |
+          # $CONDA is an environment variable pointing to the root of the miniconda directory
+          echo $CONDA/bin >> $GITHUB_PATH
+      - name: Install IPOPT
+        run: |
+          conda install ipopt -c conda-forge 
       - name: Run Pytest
         run: |
           pip install pytest-cov
