@@ -1,5 +1,5 @@
 ![GitHub](https://img.shields.io/github/license/seonho-park/PyOPF?label=license)
-will add badges
+
 
 # PyOPF: Python-based Optimal Power Flow Modeling
 Python based optimal power flow modeling framework. This modeling is basically based on [Pyomo](https://github.com/Pyomo/pyomo) for modeling.
