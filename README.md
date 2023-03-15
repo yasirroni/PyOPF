@@ -1,3 +1,4 @@
+![GitHub](https://img.shields.io/github/license/seonho-park/PyOPF?label=license)
 will add badges
 
 # PyOPF: Python-based Optimal Power Flow Modeling
