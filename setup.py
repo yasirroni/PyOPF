@@ -9,14 +9,20 @@ from os import path
 HERE = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+# with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
+#     long_description = f.read()
 
+EMOJIES = [':zap:', ':o:', ':x:']
+
+def load_description(path_dir=HERE, filename='README.md'):
+    with open(path.join(HERE, filename), 'r', encoding='utf-8') as f:
+        desc = f.read().split()
+        return ' '.join([d for d in desc if d not in EMOJIES])
 
 def load_requirements(path_dir=HERE, filename='requirements.txt', comment_char='#'):
     reqs = []
-    with open(path.join(path_dir, filename), "r") as file:
-        lines = [ln.strip() for ln in file.readlines()]
+    with open(path.join(path_dir, filename), "r") as f:
+        lines = [ln.strip() for ln in f.readlines()]
     
     for ln in lines:
         # filer all comments
@@ -39,7 +45,7 @@ setup(
     name="opf",
     version="0.1.0",
     description="PyOPF: Optimal Power Flow Modeling in Python",
-    long_description=long_description,
+    long_description=load_description(),
     long_description_content_type="text/markdown",
     author="Seonho Park",
     author_email="park.seonho@gmail.com",
