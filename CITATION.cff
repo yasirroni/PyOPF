@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "PyOPF: Python-based Optimal Power Flow Modeling"
+authors:
+  - family-names: Park
+    given-names: Seonho
+    email: park.seonho@gmail.com
+    orcid: https://orcid.org/0000-0002-4726-2441
+title: "PyOPF"
+version: 0.1.0
+date-released: 2023-03-15
+license: MIT
