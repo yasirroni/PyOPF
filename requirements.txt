@@ -1,0 +1,5 @@
+typing-extensions
+
+pyomo==6.5.0
+numpy>=1.22.3
+# ipopt>=1.0.3
