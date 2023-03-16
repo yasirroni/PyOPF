@@ -4,10 +4,13 @@ on: [push, pull_request]
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: 
+      matrix: 
+        os: [macos-latest, windows-latest, ubuntu-latest]
+      
     strategy:
       matrix:
-        python: ["3.9", "3.10"]
+        python: ["3.7", "3.8", "3.9", "3.10"]
 
     steps:
       - name: Checkout Code
