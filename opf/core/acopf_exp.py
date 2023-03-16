@@ -22,30 +22,30 @@ def cnst_slack_va_exp(m, s):
     return m.va[s] == 0.
 
 def cnst_thermal_branch_from_exp(m, e):
-    return m.pf1[e]**2 + m.qf1[e]**2 - m.rate_a[e]**2 <= 0.
+    return m.pf_from[e]**2 + m.qf_from[e]**2 - m.rate_a[e]**2 <= 0.
 
 def cnst_thermal_branch_to_exp(m, e):
-    return m.pf2[e]**2 + m.qf2[e]**2 - m.rate_a[e]**2 <= 0.
+    return m.pf_to[e]**2 + m.qf_to[e]**2 - m.rate_a[e]**2 <= 0.
 
-def cnst_ohm_pf1_exp(m, e):
-    return m.pf1[e] == (1/m.T_m[e]**2) * (m.g[e] + m.g1[e]) * m.vm[m.f_bus[e]]**2\
-        + ((-m.g[e] * m.T_R[e] + m.b[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.f_bus[e]] * m.vm[m.t_bus[e]]) * pyo.cos(m.va[m.f_bus[e]] - m.va[m.t_bus[e]])\
-        + ((-m.b[e] * m.T_R[e] - m.g[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.f_bus[e]] * m.vm[m.t_bus[e]]) * pyo.sin(m.va[m.f_bus[e]] - m.va[m.t_bus[e]])
+def cnst_ohm_pf_from_exp(m, e):
+    return m.pf_from[e] == (1/m.T_m[e]**2) * (m.g[e] + m.g_from[e]) * m.vm[m.bus_from[e]]**2\
+        + ((-m.g[e] * m.T_R[e] + m.b[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.bus_from[e]] * m.vm[m.bus_to[e]]) * pyo.cos(m.va[m.bus_from[e]] - m.va[m.bus_to[e]])\
+        + ((-m.b[e] * m.T_R[e] - m.g[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.bus_from[e]] * m.vm[m.bus_to[e]]) * pyo.sin(m.va[m.bus_from[e]] - m.va[m.bus_to[e]])
 
-def cnst_ohm_pf2_exp(m, e):
-    return m.pf2[e] == (m.g[e] + m.g2[e]) * m.vm[m.t_bus[e]]**2\
-                + ((-m.g[e] * m.T_R[e] - m.b[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.f_bus[e]] * m.vm[m.t_bus[e]]) * pyo.cos(m.va[m.f_bus[e]] - m.va[m.t_bus[e]])\
-                + ((-m.b[e] * m.T_R[e] + m.g[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.f_bus[e]] * m.vm[m.t_bus[e]]) * pyo.sin(-m.va[m.f_bus[e]] + m.va[m.t_bus[e]])
+def cnst_ohm_pf_to_exp(m, e):
+    return m.pf_to[e] == (m.g[e] + m.g_to[e]) * m.vm[m.bus_to[e]]**2\
+                + ((-m.g[e] * m.T_R[e] - m.b[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.bus_from[e]] * m.vm[m.bus_to[e]]) * pyo.cos(m.va[m.bus_from[e]] - m.va[m.bus_to[e]])\
+                + ((-m.b[e] * m.T_R[e] + m.g[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.bus_from[e]] * m.vm[m.bus_to[e]]) * pyo.sin(-m.va[m.bus_from[e]] + m.va[m.bus_to[e]])
 
-def cnst_ohm_qf1_exp(m, e):
-    return m.qf1[e] == - (1/m.T_m[e]**2) * (m.b[e] + m.b1[e]) * m.vm[m.f_bus[e]]**2\
-                - ((-m.b[e] * m.T_R[e] - m.g[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.f_bus[e]] * m.vm[m.t_bus[e]]) * pyo.cos(m.va[m.f_bus[e]] - m.va[m.t_bus[e]])\
-                + ((-m.g[e] * m.T_R[e] + m.b[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.f_bus[e]] * m.vm[m.t_bus[e]]) * pyo.sin(m.va[m.f_bus[e]] - m.va[m.t_bus[e]])
+def cnst_ohm_qf_from_exp(m, e):
+    return m.qf_from[e] == - (1/m.T_m[e]**2) * (m.b[e] + m.b_from[e]) * m.vm[m.bus_from[e]]**2\
+                - ((-m.b[e] * m.T_R[e] - m.g[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.bus_from[e]] * m.vm[m.bus_to[e]]) * pyo.cos(m.va[m.bus_from[e]] - m.va[m.bus_to[e]])\
+                + ((-m.g[e] * m.T_R[e] + m.b[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.bus_from[e]] * m.vm[m.bus_to[e]]) * pyo.sin(m.va[m.bus_from[e]] - m.va[m.bus_to[e]])
 
-def cnst_ohm_qf2_exp(m, e):
-    return m.qf2[e] == -(m.b[e] + m.b2[e]) * m.vm[m.t_bus[e]]**2\
-                - ((-m.b[e] * m.T_R[e] + m.g[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.f_bus[e]] * m.vm[m.t_bus[e]]) * pyo.cos(m.va[m.f_bus[e]] - m.va[m.t_bus[e]])\
-                + ((-m.g[e] * m.T_R[e] - m.b[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.f_bus[e]] * m.vm[m.t_bus[e]]) * pyo.sin(-m.va[m.f_bus[e]] + m.va[m.t_bus[e]])
+def cnst_ohm_qf_to_exp(m, e):
+    return m.qf_to[e] == -(m.b[e] + m.b_to[e]) * m.vm[m.bus_to[e]]**2\
+                - ((-m.b[e] * m.T_R[e] + m.g[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.bus_from[e]] * m.vm[m.bus_to[e]]) * pyo.cos(m.va[m.bus_from[e]] - m.va[m.bus_to[e]])\
+                + ((-m.g[e] * m.T_R[e] - m.b[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.bus_from[e]] * m.vm[m.bus_to[e]]) * pyo.sin(-m.va[m.bus_from[e]] + m.va[m.bus_to[e]])
             
 def define_sets_balance_exp(m):
     for busidx, genlist in m.gen_per_bus_raw.items():
@@ -75,25 +75,25 @@ def define_sets_balance_exp(m):
 
 def cnst_p_balance_exp(m, b):
     return sum(m.pg[g] for g in m.gen_per_bus[b])\
-            - sum(m.pf2[e] for e in m.branch_in_per_bus[b])\
+            - sum(m.pf_to[e] for e in m.branch_in_per_bus[b])\
             - sum(m.pd[l] for l in m.load_per_bus[b])\
-            - sum(m.pf1[e] for e in m.branch_out_per_bus[b])\
+            - sum(m.pf_from[e] for e in m.branch_out_per_bus[b])\
             - sum(m.gs[s] for s in m.shunt_per_bus[b]) * m.vm[b]**2 \
             == 0.
 
 def cnst_q_balance_exp(m, b):
     return sum(m.qg[g] for g in m.gen_per_bus[b])\
-            - sum(m.qf2[e] for e in m.branch_in_per_bus[b])\
+            - sum(m.qf_to[e] for e in m.branch_in_per_bus[b])\
             - sum(m.qd[l] for l in m.load_per_bus[b])\
-            - sum(m.qf1[e] for e in m.branch_out_per_bus[b])\
+            - sum(m.qf_from[e] for e in m.branch_out_per_bus[b])\
             + sum(m.bs[s] for s in m.shunt_per_bus[b]) * m.vm[b]**2\
             == 0.
             
-def cnst_vad_lower_exp(m, e):
-    return m.angmin[e] - (m.va[m.f_bus[e]] - m.va[m.t_bus[e]]) <= 0.
+def cnst_dva_lower_exp(m, e):
+    return m.dvamin[e] - (m.va[m.bus_from[e]] - m.va[m.bus_to[e]]) <= 0.
 
-def cnst_vad_upper_exp(m, e):
-    return m.va[m.f_bus[e]] - m.va[m.t_bus[e]] - m.angmax[e] <= 0.
+def cnst_dva_upper_exp(m, e):
+    return m.va[m.bus_from[e]] - m.va[m.bus_to[e]] - m.dvamax[e] <= 0.
 
 def obj_cost_exp(m, g):
     return sum(m.pg[g]*m.pg[g]*m.cost[g,0] + m.pg[g]*m.cost[g,1] + m.cost[g,2] for g in m.G)

@@ -25,7 +25,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.L = pyo.Set() # load indices
         self.model.S = pyo.Set() # shunt indices
         self.model.slack = pyo.Set() # the slack buses
-        self.model.ncost = pyo.Set() # the number of costs  # it should be 2 (linear...)
+        self.model.ncost = pyo.Set() # the number of costs
 
         self.model.gen_per_bus = pyo.Set(self.model.B, within=self.model.G)
         self.model.load_per_bus = pyo.Set(self.model.B, within=self.model.L)
@@ -36,14 +36,14 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         # # ====================
         # # I.    Parameters
         # # ====================
-        self.model.pginit = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
-        self.model.qginit = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
-        self.model.vminit = pyo.Param(self.model.B, within=pyo.Reals, mutable=True)
-        self.model.vainit = pyo.Param(self.model.B, within=pyo.Reals, mutable=True)
-        self.model.pf1init = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
-        self.model.pf2init = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
-        self.model.qf1init = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
-        self.model.qf2init = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
+        self.model.pg_init = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
+        self.model.qg_init = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
+        self.model.vm_init = pyo.Param(self.model.B, within=pyo.Reals, mutable=True)
+        self.model.va_init = pyo.Param(self.model.B, within=pyo.Reals, mutable=True)
+        self.model.pf_from_init = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
+        self.model.pf_to_init   = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
+        self.model.qf_from_init = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
+        self.model.qf_to_init   = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
 
         self.model.pgmin = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.pgmax = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
@@ -51,6 +51,8 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.qgmax = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.vmmin = pyo.Param(self.model.B, within=pyo.Reals, mutable=True)
         self.model.vmmax = pyo.Param(self.model.B, within=pyo.Reals, mutable=True)
+        self.model.dvamin = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
+        self.model.dvamax = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
 
         self.model.pd = pyo.Param(self.model.L, within=pyo.Reals, mutable=True)
         self.model.qd = pyo.Param(self.model.L, within=pyo.Reals, mutable=True)
@@ -61,33 +63,31 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.cost = pyo.Param(self.model.G, self.model.ncost, within=pyo.Reals, mutable=True)
 
         self.model.rate_a = pyo.Param(self.model.E, within=pyo.NonNegativeReals, mutable=True)
-        self.model.f_bus = pyo.Param(self.model.E, within=self.model.B)
-        self.model.t_bus = pyo.Param(self.model.E, within=self.model.B)
-        self.model.g1 = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
-        self.model.g2 = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
-        self.model.b1 = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
-        self.model.b2 = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
+        self.model.bus_from = pyo.Param(self.model.E, within=self.model.B)
+        self.model.bus_to = pyo.Param(self.model.E, within=self.model.B)
+        self.model.g_from = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
+        self.model.g_to = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
+        self.model.b_from = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
+        self.model.b_to = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
         self.model.T_m = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
         self.model.T_R = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
         self.model.T_I = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
         self.model.g = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
         self.model.b = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
 
-        self.model.angmin = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
-        self.model.angmax = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
 
         # # ====================
         # # II.    Variables
         # # ====================
-        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pginit, within=pyo.Reals) # active generation (injection), continuous
-        self.model.qg = pyo.Var(self.model.G, initialize=self.model.qginit, within=pyo.Reals) # reactive generation (injection), continuous
-        self.model.vm = pyo.Var(self.model.B, initialize=self.model.vminit, within=pyo.Reals) # voltage magnitude, continuous
-        self.model.va = pyo.Var(self.model.B, initialize=self.model.vainit, within=pyo.Reals) # voltage angle, continuous
+        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, within=pyo.Reals) # active generation (injection), continuous
+        self.model.qg = pyo.Var(self.model.G, initialize=self.model.qg_init, within=pyo.Reals) # reactive generation (injection), continuous
+        self.model.vm = pyo.Var(self.model.B, initialize=self.model.vm_init, within=pyo.Reals) # voltage magnitude, continuous
+        self.model.va = pyo.Var(self.model.B, initialize=self.model.va_init, within=pyo.Reals) # voltage angle, continuous
 
-        self.model.pf1 = pyo.Var(self.model.E, initialize=self.model.pf1init, within=pyo.Reals) # active power flow (from), continuous
-        self.model.pf2 = pyo.Var(self.model.E, initialize=self.model.pf2init, within=pyo.Reals) # active power flow (to), continuous
-        self.model.qf1 = pyo.Var(self.model.E, initialize=self.model.qf1init, within=pyo.Reals) # reactive power flow (from), continuous
-        self.model.qf2 = pyo.Var(self.model.E, initialize=self.model.qf2init, within=pyo.Reals) # reactive power flow (to), continuous
+        self.model.pf_from = pyo.Var(self.model.E, initialize=self.model.pf_from_init, within=pyo.Reals) # active power flow (from), continuous
+        self.model.pf_to   = pyo.Var(self.model.E, initialize=self.model.pf_to_init, within=pyo.Reals) # active power flow (to), continuous
+        self.model.qf_from = pyo.Var(self.model.E, initialize=self.model.qf_from_init, within=pyo.Reals) # reactive power flow (from), continuous
+        self.model.qf_to   = pyo.Var(self.model.E, initialize=self.model.qf_to_init, within=pyo.Reals) # reactive power flow (to), continuous
 
         # ====================
         # III.   Constraints
@@ -117,10 +117,10 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         # ====================
         # III.d Ohm's Law
         # ====================
-        self.model.cnst_ohm_pf1 = pyo.Constraint(self.model.E, rule=cnst_ohm_pf1_exp)
-        self.model.cnst_ohm_pf2 = pyo.Constraint(self.model.E, rule=cnst_ohm_pf2_exp)
-        self.model.cnst_ohm_qf1 = pyo.Constraint(self.model.E, rule=cnst_ohm_qf1_exp)
-        self.model.cnst_ohm_qf2 = pyo.Constraint(self.model.E, rule=cnst_ohm_qf2_exp)
+        self.model.cnst_ohm_pf_from = pyo.Constraint(self.model.E, rule=cnst_ohm_pf_from_exp)
+        self.model.cnst_ohm_pf_to   = pyo.Constraint(self.model.E, rule=cnst_ohm_pf_to_exp)
+        self.model.cnst_ohm_qf_from = pyo.Constraint(self.model.E, rule=cnst_ohm_qf_from_exp)
+        self.model.cnst_ohm_qf_to   = pyo.Constraint(self.model.E, rule=cnst_ohm_qf_to_exp)
 
         # ====================
         # III.e Power Balance
@@ -132,8 +132,8 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         # ====================
         # III.f Voltage Angle Difference
         # ====================
-        self.model.cnst_vad_lower = pyo.Constraint(self.model.E, rule=cnst_vad_lower_exp)
-        self.model.cnst_vad_upper = pyo.Constraint(self.model.E, rule=cnst_vad_upper_exp)
+        self.model.cnst_dva_lower = pyo.Constraint(self.model.E, rule=cnst_dva_lower_exp)
+        self.model.cnst_dva_upper = pyo.Constraint(self.model.E, rule=cnst_dva_upper_exp)
 
         # ====================
         # IIII.   Objective
@@ -156,9 +156,9 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         shuntidxs = sorted(list(shunts.keys()))
 
         branchidxs_all = sorted(list(branches.keys()))
-        branchidxs = [branch_idx for branch_idx in branchidxs_all if branches[branch_idx]['br_status']>0]
-        genidxs_all = sorted(list(gens.keys())) # it contains not active generators
-        genidxs = [gen_idx for gen_idx in genidxs_all if gens[gen_idx]['gen_status']>0]
+        branchidxs = [branch_idx for branch_idx in branchidxs_all if branches[branch_idx]['br_status']>0] # factor out not working branches
+        genidxs_all = sorted(list(gens.keys())) 
+        genidxs = [gen_idx for gen_idx in genidxs_all if gens[gen_idx]['gen_status']>0] # factor out not working generators
 
         ncost = 3 # all PGLib input files have three cost coefficients
         
@@ -168,10 +168,9 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         branch_out_per_bus = { busidx: [] for busidx in busidxs }
         shunt_per_bus = { busidx: [] for busidx in busidxs }
 
-        
         # Generator
         pgmax, pgmin, qgmax, qgmin = {}, {}, {}, {}
-        pginit, qginit = {}, {}
+        pg_init, qg_init = {}, {}
         cost = {}
         for gen_idx in genidxs:
             gen = gens[gen_idx]
@@ -179,8 +178,8 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
             pgmin[gen_idx] = gen['pmin']
             qgmax[gen_idx] = gen['qmax']
             qgmin[gen_idx] = gen['qmin']
-            pginit[gen_idx] = gen['pg']
-            qginit[gen_idx] = gen['qg']
+            pg_init[gen_idx] = gen['pg']
+            qg_init[gen_idx] = gen['qg']
             cost_raw = gen['cost']
             for i in range(ncost):
                 cost[(gen_idx,i)] = cost_raw[i]
@@ -215,20 +214,20 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         
         # Branch
         rate_a = {}
-        f_bus, t_bus = {}, {}
-        g1, g2, b1, b2, T_R, T_I, T_m, g, b = {}, {}, {}, {}, {}, {}, {}, {}, {}
-        angmin, angmax = {}, {}
+        bus_from, bus_to = {}, {}
+        g_from, g_to, b_from, b_to, T_R, T_I, T_m, g, b = {}, {}, {}, {}, {}, {}, {}, {}, {}
+        dvamin, dvamax = {}, {}
         for branch_idx in branchidxs:
             branch = branches[branch_idx]
             rate_a_val = branch['rate_a']
             if rate_a_val == 0.: rate_a_val + 1e12
             rate_a[branch_idx] = rate_a_val
-            f_bus[branch_idx] = branch['f_bus']
-            t_bus[branch_idx] = branch['t_bus']
-            g1[branch_idx] = branch['g_fr']
-            g2[branch_idx] = branch['g_to']
-            b1[branch_idx] = branch['b_fr']
-            b2[branch_idx] = branch['b_to']
+            bus_from[branch_idx] = branch['f_bus']
+            bus_to[branch_idx] = branch['t_bus']
+            g_from[branch_idx] = branch['g_fr']
+            g_to[branch_idx] = branch['g_to']
+            b_from[branch_idx] = branch['b_fr']
+            b_to[branch_idx] = branch['b_to']
             T_m_val = branch['tap']
             shift = branch['shift']
             T_R[branch_idx] = T_m_val * math.cos(shift)
@@ -238,27 +237,27 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
             x = branch['br_x']
             g[branch_idx] = r / (r**2 + x**2)
             b[branch_idx] = -x / (r**2 + x**2)
-            angmin[branch_idx] = branch['angmin']
-            angmax[branch_idx] = branch['angmax']
+            dvamin[branch_idx] = branch['angmin']
+            dvamax[branch_idx] = branch['angmax']
             branch_out_per_bus[branch['f_bus']].append(branch_idx) # from buses
             branch_in_per_bus[branch['t_bus']].append(branch_idx)
 
         if init_var is not None:
-            pginit = init_var['pg']
-            qginit = init_var['qg']
-            vminit = init_var['vm']
-            vainit = init_var['va']
-            pf1init = init_var['pf1']
-            pf2init = init_var['pf2']
-            qf1init = init_var['qf1']
-            qf2init = init_var['qf2']
+            pg_init = init_var['pg']
+            qg_init = init_var['qg']
+            vm_init = init_var['vm']
+            va_init = init_var['va']
+            pf_from_init = init_var['pf1']
+            pf_to_init = init_var['pf2']
+            qf_from_init = init_var['qf1']
+            qf_to_init = init_var['qf2']
         else:
-            vminit = { idx: 1. for idx in busidxs }
-            vainit = { idx: 0. for idx in busidxs }
-            pf1init = { idx: 0. for idx in branchidxs }
-            pf2init = { idx: 0. for idx in branchidxs }
-            qf1init = { idx: 0. for idx in branchidxs }
-            qf2init = { idx: 0. for idx in branchidxs }
+            vm_init = { idx: 1. for idx in busidxs }
+            va_init = { idx: 0. for idx in busidxs }
+            pf_from_init = { idx: 0. for idx in branchidxs }
+            pf_to_init = { idx: 0. for idx in branchidxs }
+            qf_from_init = { idx: 0. for idx in branchidxs }
+            qf_to_init = { idx: 0. for idx in branchidxs }
                 
         data = {
             'G': {None: genidxs},
@@ -266,14 +265,14 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
             'E': {None: branchidxs},
             'L': {None: loadidxs},
             'S': {None: shuntidxs},
-            'pginit': pginit,
-            'qginit': qginit,
-            'vminit': vminit,
-            'vainit': vainit,
-            'pf1init': pf1init,
-            'pf2init': pf2init,
-            'qf1init': qf1init,
-            'qf2init': qf2init,
+            'pg_init': pg_init,
+            'qg_init': qg_init,
+            'vm_init': vm_init,
+            'va_init': va_init,
+            'pf_from_init': pf_from_init,
+            'pf_to_init': pf_to_init,
+            'qf_from_init': qf_from_init,
+            'qf_to_init': qf_to_init,
             'ncost': {None: np.arange(ncost)},
             'slack': {None: slack},
             'pd': pd,
@@ -288,11 +287,11 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
             'vmmax': vmmax,
             'vmmin': vmmin,
             'rate_a': rate_a,
-            'f_bus': f_bus,
-            't_bus': t_bus,
-            'g1': g1, 'g2': g2, 'b1': b1, 'b2': b2,
+            'bus_from': bus_from,
+            'bus_to': bus_to,
+            'g_from': g_from, 'g_to': g_to, 'b_from': b_from, 'b_to': b_to,
             'T_R': T_R, 'T_I': T_I, 'T_m': T_m, 'g':g, 'b':b,
-            'angmin': angmin, 'angmax': angmax
+            'dvamin': dvamin, 'dvamax': dvamax
         }
 
         self.model.gen_per_bus_raw = gen_per_bus
