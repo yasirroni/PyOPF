@@ -1,4 +1,5 @@
 ![GitHub](https://img.shields.io/github/license/seonho-park/PyOPF?label=license)
+[![codecov](https://codecov.io/gh/seonho-park/PyOPF/branch/main/graph/badge.svg?token=QZTV5P31IC)](https://codecov.io/gh/seonho-park/PyOPF)
 [![DOI](https://zenodo.org/badge/614393450.svg)](https://zenodo.org/badge/latestdoi/614393450)
 
 
@@ -13,7 +14,7 @@ pip install opf
 ```
 
 * Dependencies
-    + python>=3.9
+    + python>=3.8
     + pyomo>=6.5.0
     + numpy>=1.22.3
     + ipopt>=1.0.3
