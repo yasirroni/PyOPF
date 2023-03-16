@@ -12,22 +12,14 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-      - name: Add conda to system path
+      - name: Install IPOPT & Python in Conda
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
           echo $CONDA/bin >> $GITHUB_PATH
-      - name: Create Conda Environment
-        run: |
-          conda create -n env${{matrix.python}} python=${{matrix.python}}
-      - name: Activate Conda Environment
-        run: |
-          conda activate env${{matrix.python}}
+          conda install ipopt python=${{matrix.python}} -c conda-forge 
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
-      - name: Install IPOPT
-        run: |
-          conda install ipopt -c conda-forge 
       - name: Run Pytest
         run: |
           pip install pytest-cov
