@@ -21,13 +21,14 @@ pip install opf
 
 ## Formulations
 1. :o: AC-OPF (AC Optimal Power Flow): 
-    - The formulation can be found in [PGLib](https://github.com/power-grid-lib/pglib-opf).
+    - AC-OPF with a polar bus voltage variables.
+    - The detailed formulation can be found in [PGLib](https://github.com/power-grid-lib/pglib-opf).
     - **PyOPF** takes the the input files in PGLib, which is basically based on MATPOWER format.
     - Uses various solvers that are supported in Pyomo including IPOPT to solve the problem instance.
 
-2. :x:DC-OPF (DC Optimal Power Flow)
+2. :o:DC-OPF (DC Optimal Power Flow)
     - Linear approximation to AC-OPF.
-    - To be added
+    - Only use active power generations and bus voltage angles as variables.
 
 3. :x:SC-AC-OPF (Security Constrained AC Optimal Power Flow)
     -  To be added
