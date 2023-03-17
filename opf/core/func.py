@@ -1,4 +1,5 @@
 from .acopf import AbstractACOPFModel
+from .dcopf import AbstractDCOPFModel
 from .base import AbstractPowerBaseModel
 
 
@@ -14,8 +15,10 @@ def build_model(model_type:str) -> AbstractPowerBaseModel:
     
     if model_type == 'acopf':
         model = AbstractACOPFModel(model_type)
-        model._build_model()
+    elif model_type == 'dcopf':
+        model = AbstractDCOPFModel(model_type)
     else:
         assert False
 
+    model._build_model()
     return model
