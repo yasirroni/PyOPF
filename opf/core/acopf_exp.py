@@ -1,4 +1,5 @@
 import pyomo.environ as pyo
+from pyomo.core.util import quicksum
 
 def cnst_pg_bound_min_exp(m, g):
     return m.pgmin[g] - m.pg[g] <= 0. 
@@ -74,19 +75,19 @@ def define_sets_balance_exp(m):
                 m.shunt_per_bus[busidx].add(shuntidx)
 
 def cnst_p_balance_exp(m, b):
-    return sum(m.pg[g] for g in m.gen_per_bus[b])\
-            - sum(m.pf_to[e] for e in m.branch_in_per_bus[b])\
-            - sum(m.pd[l] for l in m.load_per_bus[b])\
-            - sum(m.pf_from[e] for e in m.branch_out_per_bus[b])\
-            - sum(m.gs[s] for s in m.shunt_per_bus[b]) * m.vm[b]**2 \
+    return quicksum(m.pg[g] for g in m.gen_per_bus[b])\
+            - quicksum(m.pf_to[e] for e in m.branch_in_per_bus[b])\
+            - quicksum(m.pd[l] for l in m.load_per_bus[b])\
+            - quicksum(m.pf_from[e] for e in m.branch_out_per_bus[b])\
+            - quicksum(m.gs[s] for s in m.shunt_per_bus[b]) * m.vm[b]**2 \
             == 0.
 
 def cnst_q_balance_exp(m, b):
-    return sum(m.qg[g] for g in m.gen_per_bus[b])\
-            - sum(m.qf_to[e] for e in m.branch_in_per_bus[b])\
-            - sum(m.qd[l] for l in m.load_per_bus[b])\
-            - sum(m.qf_from[e] for e in m.branch_out_per_bus[b])\
-            + sum(m.bs[s] for s in m.shunt_per_bus[b]) * m.vm[b]**2\
+    return quicksum(m.qg[g] for g in m.gen_per_bus[b])\
+            - quicksum(m.qf_to[e] for e in m.branch_in_per_bus[b])\
+            - quicksum(m.qd[l] for l in m.load_per_bus[b])\
+            - quicksum(m.qf_from[e] for e in m.branch_out_per_bus[b])\
+            + quicksum(m.bs[s] for s in m.shunt_per_bus[b]) * m.vm[b]**2\
             == 0.
             
 def cnst_dva_lower_exp(m, e):
@@ -96,4 +97,4 @@ def cnst_dva_upper_exp(m, e):
     return m.va[m.bus_from[e]] - m.va[m.bus_to[e]] - m.dvamax[e] <= 0.
 
 def obj_cost_exp(m, g):
-    return sum(m.pg[g]*m.pg[g]*m.cost[g,0] + m.pg[g]*m.cost[g,1] + m.cost[g,2] for g in m.G)
+    return quicksum(m.pg[g]*m.pg[g]*m.cost[g,0] + m.pg[g]*m.cost[g,1] + m.cost[g,2] for g in m.G)

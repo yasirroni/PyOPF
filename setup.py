@@ -5,6 +5,8 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
+import opf
+
 # The directory containing this file
 HERE = path.abspath(path.dirname(__file__))
 
@@ -43,7 +45,7 @@ packages = [
 # This call to setup() does all the work
 setup(
     name="opf",
-    version="0.1.0",
+    version=opf.__version__,
     description="PyOPF: Optimal Power Flow Modeling in Python",
     long_description=load_description(),
     long_description_content_type="text/markdown",

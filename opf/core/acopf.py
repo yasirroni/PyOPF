@@ -8,14 +8,14 @@ from .acopf_exp import *
 
 
 class AbstractACOPFModel(AbstractPowerBaseModel):
-    """ Abstract optimization model class.  
+    """ Abstract AC-OPF optimization model class.  
     """
     def __init__(self, model_type):
         super().__init__(model_type)
 
     def _build_model(self) -> None:
         """ Define the (abstract) AC-OPF optimization model. 
-            This is enabled without having the specific parameter value.
+            This is enabled without having the specific parameter values.
         """
         print('build model...', end=' ')
         
@@ -142,6 +142,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
 
         print('end')
 
+
     def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None) -> pyo.ConcreteModel:
         print('instantiate model...', end=' ')
         
@@ -170,7 +171,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
 
         # Generator
         pgmax, pgmin, qgmax, qgmin = {}, {}, {}, {}
-        pg_init, qg_init = {}, {}
+        pg, qg = {}, {}
         cost = {}
         for gen_idx in genidxs:
             gen = gens[gen_idx]
@@ -178,8 +179,8 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
             pgmin[gen_idx] = gen['pmin']
             qgmax[gen_idx] = gen['qmax']
             qgmin[gen_idx] = gen['qmin']
-            pg_init[gen_idx] = gen['pg']
-            qg_init[gen_idx] = gen['qg']
+            pg[gen_idx] = gen['pg']
+            qg[gen_idx] = gen['qg']
             cost_raw = gen['cost']
             for i in range(ncost):
                 cost[(gen_idx,i)] = cost_raw[i]
@@ -252,6 +253,8 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
             qf_from_init = init_var['qf1']
             qf_to_init = init_var['qf2']
         else:
+            pg_init = pg
+            qg_init = qg
             vm_init = { idx: 1. for idx in busidxs }
             va_init = { idx: 0. for idx in busidxs }
             pf_from_init = { idx: 0. for idx in branchidxs }
