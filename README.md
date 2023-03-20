@@ -8,10 +8,12 @@ Python based optimal power flow modeling framework. This modeling is basically b
 Pyomo is a solver-agnostic optimization modeling package in Python. 
 This repo utilizes Pyomo for modeling various optimal power flow formulations in power system applications.
 
+
 ## Installation
 ```
 pip install opf
 ```
+
 
 * Dependencies
     + python>=3.8
@@ -19,19 +21,39 @@ pip install opf
     + numpy>=1.22.3
     + ipopt>=1.0.3
 
+
 ## Formulations
 1. :o: AC-OPF (AC Optimal Power Flow): 
+    ```python
+    model = opf.build_model('acopf')
+    ```
     - AC-OPF with a polar bus voltage variables.
     - The detailed formulation can be found in [PGLib](https://github.com/power-grid-lib/pglib-opf).
     - **PyOPF** takes the the input files in PGLib, which is basically based on MATPOWER format.
     - Uses various solvers that are supported in Pyomo including IPOPT to solve the problem instance.
 
 2. :o:DC-OPF (DC Optimal Power Flow)
+    ```python
+    model = opf.build_model('dcopf') # base DCOPF model
+    ```
     - Linear approximation to AC-OPF.
+    - Also support PTDF (power transfer distribution factor) based formulation.
     - Only use active power generations and bus voltage angles as variables.
 
-3. :x:SC-AC-OPF (Security Constrained AC Optimal Power Flow)
+3. :x:SC-DC-OPF (Security Constrained DC Optimal Power Flow)
     -  To be added
+
+
+4. :x:SC-AC-OPF (Security Constrained AC Optimal Power Flow)
+    -  To be added
+
+
+## Warmstarting
+* **PyOPF** supports primal and dual warmstarting. Documentation is to be added.
+    ```python
+    opf.setup_warmstart(instance, warmstart_dict) 
+    ```
+
 
 ## Examples
 ### Running AC-OPF from [PGLib](https://github.com/power-grid-lib/pglib-opf).
