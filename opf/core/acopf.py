@@ -304,6 +304,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.shunt_per_bus_raw = shunt_per_bus
         
         instance = self.model.create_instance({None: data}) # create instance (ConcreteModel), 
+        instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
         # note that self.model is not duplicated because it is desired to be AbstractModel 
         # for taking different types of problem instances consistently.
 

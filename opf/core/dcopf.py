@@ -194,6 +194,7 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         self.model.branch_out_per_bus_raw = branch_out_per_bus
 
         instance = self.model.create_instance({None: data}) # create instance (ConcreteModel), 
+        instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
         print('end')
         return instance
 
