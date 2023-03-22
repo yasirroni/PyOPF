@@ -49,30 +49,30 @@ def cnst_ohm_qf_to_exp(m, e):
                 + ((-m.g[e] * m.T_R[e] - m.b[e] * m.T_I[e])/m.T_m[e]**2) * (m.vm[m.bus_from[e]] * m.vm[m.bus_to[e]]) * pyo.sin(-m.va[m.bus_from[e]] + m.va[m.bus_to[e]])
             
 def define_sets_balance_exp(m):
-    for busidx, genlist in m.gen_per_bus_raw.items():
+    for busid, genlist in m.gen_per_bus_raw.items():
         if len(genlist) > 0:
-            for genidx in genlist:
-                m.gen_per_bus[busidx].add(genidx)
+            for genid in genlist:
+                m.gen_per_bus[busid].add(genid)
 
-    for busidx, loadlist in m.load_per_bus_raw.items():
+    for busid, loadlist in m.load_per_bus_raw.items():
         if len(loadlist) > 0:
-            for loadidx in loadlist:
-                m.load_per_bus[busidx].add(loadidx)
+            for loadid in loadlist:
+                m.load_per_bus[busid].add(loadid)
 
-    for busidx, branchlist in m.branch_in_per_bus_raw.items():
+    for busid, branchlist in m.branch_in_per_bus_raw.items():
         if len(branchlist) > 0:
-            for branchidx in branchlist:
-                m.branch_in_per_bus[busidx].add(branchidx)
+            for branchid in branchlist:
+                m.branch_in_per_bus[busid].add(branchid)
     
-    for busidx, branchlist in m.branch_out_per_bus_raw.items():
+    for busid, branchlist in m.branch_out_per_bus_raw.items():
         if len(branchlist) > 0:
-            for branchidx in branchlist:
-                m.branch_out_per_bus[busidx].add(branchidx)
+            for branchid in branchlist:
+                m.branch_out_per_bus[busid].add(branchid)
     
-    for busidx, shuntlist in m.shunt_per_bus_raw.items():
+    for busid, shuntlist in m.shunt_per_bus_raw.items():
         if len(shuntlist) > 0:
-            for shuntidx in shuntlist:
-                m.shunt_per_bus[busidx].add(shuntidx)
+            for shuntid in shuntlist:
+                m.shunt_per_bus[busid].add(shuntid)
 
 def cnst_p_balance_exp(m, b):
     return quicksum(m.pg[g] for g in m.gen_per_bus[b])\
