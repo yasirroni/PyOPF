@@ -34,7 +34,7 @@ pip install opf
 
 2. :o:DC-OPF (DC Optimal Power Flow)
     ```python
-    model = opf.build_model('dcopf') # base DC-OPF model
+    model = opf.build_model('dcopf')      # base DC-OPF model
     model = opf.build_model('dcopf-ptdf') # DC-OPF model using PTDF
     ```
     - Linear approximation to AC-OPF.
