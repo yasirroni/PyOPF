@@ -17,7 +17,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         """ Define the (abstract) AC-OPF optimization model. 
             This is enabled without having the specific parameter values.
         """
-        print('build model...', end=' ')
+        print('build model...', end=' ', flush=True)
         
         self.model.B = pyo.Set() # bus indices
         self.model.G = pyo.Set() # generator indices
@@ -140,11 +140,11 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         # ====================
         self.model.obj_cost = pyo.Objective(sense=pyo.minimize, rule=obj_cost_exp)
 
-        print('end')
+        print('end', flush=True)
 
 
     def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
-        print('instantiate model...', end=' ')
+        print('instantiate model...', end=' ', flush=True)
         
         gens = network['gen']
         buses = network['bus']
@@ -303,13 +303,10 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.branch_out_per_bus_raw = branch_out_per_bus
         self.model.shunt_per_bus_raw = shunt_per_bus
         
-        import time
-        t0 = time.time()
         instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel), 
-        print('elapsed time for create_instance', time.time()-t0)
         instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
         # note that self.model is not duplicated because it is desired to be AbstractModel 
         # for taking different types of problem instances consistently.
 
-        print('end')
+        print('end', flush=True)
         return instance
