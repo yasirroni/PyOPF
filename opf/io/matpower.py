@@ -113,22 +113,24 @@ def _extract_mp_data(lines:List[str], lineidx:int, column_info:List[Tuple[str,..
     entries = []
     idx = lineidx+1 
     
-    entry_idx = 1
+    entry_idx = 0
     while True:
         line = lines[idx]
         if ']' in line: break
         entry = {}
-        # line = lines[idx][:-2]
         line = line[:line.rfind(';')]  # exclude ';', any comments at each line, and '\n'
         row_data = line.split()
         for i, row in enumerate(row_data):
             entry[column_info[i][0]] = column_info[i][1](row)
+        
         if entry_type == 'bus':
-            entry['index'] = int(row_data[0])
-            entry['source_id'] = ['bus', entry['index']]
-        else:
+            entry['id'] = int(row_data[0])
             entry['index'] = entry_idx
-            entry['source_id'] = [entry_type, entry_idx]
+            # entry['source_id'] = ['bus', entry['index']]
+        else:
+            entry['id'] = entry_idx+1
+            entry['index'] = entry_idx
+            # entry['source_id'] = [entry_type, entry_idx]
         entries.append(entry)
         entry_idx += 1
         idx += 1
@@ -140,11 +142,10 @@ def _extract_mp_gencost_data(lines:List[str], lineidx:int) -> List[Any]:
     entries = []
     idx = lineidx+1
 
-    entry_idx = 1
+    entry_idx = 0
     while True:
         line = lines[idx]
         if ']' in line: break
-        # line = lines[idx][:-2]
         line = lines[idx]
         line = line[:line.rfind(';')]
         row_data = line.split()
@@ -156,8 +157,9 @@ def _extract_mp_gencost_data(lines:List[str], lineidx:int) -> List[Any]:
         ncost = int(row_data[3])
         costs = [float(row_data[4+c]) for c in range(ncost)]
         entry = {
+            'id': entry_idx+1,
             'index': entry_idx,
-            'source_id': ["gencost", entry_idx],
+            # 'source_id': ["gencost", entry_idx],
             'model': model,
             'startup': startup,
             'shutdown': shutdown,
@@ -181,10 +183,8 @@ def mp2data(mp_data:Dict[str,Any]) -> Dict[str,Any]:
         Dict[str,Any]: data dictionary for analysis
     """
     data = {**mp_data}
-    # print('mp_data.keys', data.keys())
-    # data['source_type'] = mp_data['source_type']
-    # data['bus'] = mp_data['bus']
     
+    _mp2data_bus(data)
     _mp2data_branch(data)
     _merge_cost_data(data)
 
@@ -197,6 +197,14 @@ def mp2data(mp_data:Dict[str,Any]) -> Dict[str,Any]:
             data[optional] = {}
        
     return data
+
+
+def _mp2data_bus(data):
+    ...
+    # buses = data['bus']
+    # busids = sorted(list(buses.keys())) # sort this for consistency between the pyomo vector and the input matpower 
+    # for idx, busid in busids:
+    #     buses[busid]['index'] = idx
 
 
 def _mp2data_branch(data):
@@ -240,9 +248,11 @@ def _merge_cost_data(data):
 
     for (i, gc) in enumerate(gencost):
         g = gen[i]
-        assert g['index'] == gc['index']
-        del gc['index']
-        del gc['source_id']
+        # assert g['index'] == gc['index']
+        assert g['id'] == gc['id']
+        # del gc['index']
+        del gc['id']
+        # del gc['source_id']
         g.update(gc)
     
     del data['gencost'] # delete gencost from data
@@ -252,7 +262,7 @@ def _merge_cost_data(data):
 def _split_loads_shunts(data):
     data['load'], data['shunt'] = [], []
 
-    load_idx, shunt_idx = 1, 1
+    load_idx, shunt_idx = 0, 0
 
     for i,bus in enumerate(data['bus']):
         if bus['pd'] != 0. or bus['qd'] != 0.: # load
@@ -262,7 +272,8 @@ def _split_loads_shunts(data):
                 'load_bus':  bus['bus_i'],
                 'status':    int(bus['bus_type']!=4),
                 'index':     load_idx,
-                'source_id': ['bus', bus['bus_i']]
+                'id':        load_idx+1,
+                # 'source_id': ['bus', bus['bus_i']]
             })
             load_idx += 1
         
@@ -273,7 +284,8 @@ def _split_loads_shunts(data):
                 'shunt_bus': bus['bus_i'],
                 'status': int(bus['bus_type']!=4),
                 'index': shunt_idx,
-                'source_id': ['bus', bus['bus_i']]
+                'id':    shunt_idx+1
+                # 'source_id': ['bus', bus['bus_i']]
             })
             shunt_idx += 1
 
@@ -289,9 +301,12 @@ def _list2dict(data):
         entries = data[k]
         entries_dict = {}
         for i,entry in enumerate(entries):
-            idx = entry.get('index',i)
-            assert idx not in entries_dict
-            entries_dict[idx] = entry
+            # idx = entry.get('index',i)
+            # assert idx not in entries_dict
+            # entries_dict[idx] = entry
+            id = entry.get('id', i)
+            assert id not in entries_dict
+            entries_dict[id] = entry
         data[k] = entries_dict # convert list to dict
 
 
