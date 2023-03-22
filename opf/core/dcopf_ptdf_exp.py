@@ -1,11 +1,10 @@
 import pyomo.environ as pyo
 from pyomo.core.util import quicksum
-
+from pyomo.core.expr.numeric_expr import LinearExpression
 
 def cnst_pf_ptdf_exp(m, e):
-    load_injection = [m.ptdf_l[e,l]*m.pd[l] for l in m.L]
-    gen_injection = [m.ptdf_g[e,g]*m.pg[g] for g in m.G]
-    return m.pf[e] == quicksum(load_injection) - quicksum(gen_injection) 
+    m.gen_injection = LinearExpression(constant=0, linear_coefs=m.ptdf_g[e], linear_vars=[m.pg[g] for g in m.G])
+    return m.pf[e] == m.load_injection[e] - m.gen_injection
     
 
 def cnst_power_bal_ptdf_exp(m):

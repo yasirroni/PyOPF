@@ -36,8 +36,7 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
         self.model.pd = pyo.Param(self.model.L, within=pyo.Reals, mutable=True)
         self.model.rate_a = pyo.Param(self.model.E, within=pyo.NonNegativeReals, mutable=True)
         self.model.cost = pyo.Param(self.model.G, self.model.ncost, within=pyo.Reals, mutable=True)
-        self.model.ptdf_g = pyo.Param(self.model.E, self.model.G, within=pyo.Reals, mutable=True)
-        self.model.ptdf_l = pyo.Param(self.model.E, self.model.L, within=pyo.Reals, mutable=True)
+        self.model.load_injection = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
 
         # # ====================
         # # II.    Variables
@@ -61,10 +60,12 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
         # III.b Define Flow
         # ====================
         self.model.cnst_pf = pyo.Constraint(self.model.E, rule=cnst_pf_ptdf_exp)
+        # self.model.cnst_pf = pyo.Constraint(rule=cnst_pf_ptdf_exp)
 
         # ====================
         # III.c Power Balance
         # ====================
+        # self.model.define_injections = pyo.BuildAction(rule=define_sets_balance_exp)
         self.model.cnst_power_bal = pyo.Constraint(rule=cnst_power_bal_ptdf_exp)
 
         # ====================
@@ -105,9 +106,12 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
 
         # Load 
         pd = {}
+        pdvec = []
         for load_id in loadids:
             load = loads[load_id]
             pd[load_id] = load['pd']
+            pdvec.append(load['pd'])
+        pdvec = np.asarray(pdvec)
 
         # Bus
         slack = []
@@ -133,19 +137,14 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
             pf_init = { id: 0. for id in branchids }
 
         ptdf_g_raw, ptdf_l_raw = compute_ptdf(network)
+        load_injection_raw = ptdf_l_raw @ pdvec
+        load_injection = {}
+        for i, branch_id in enumerate(branchids):
+            load_injection[branch_id] = load_injection_raw[i]
 
-        # self.model.ptdf_g = {}
-        # self.model.ptdf_l = {}
-        # for i, branchid in enumerate(branchids):
-        #     self.model.ptdf_g[branchid] = ptdf_g[i,:]
-        #     self.model.ptdf_l[branchid] = ptdf_l[i,:]
-
-        ptdf_g, ptdf_l = {}, {}
+        self.model.ptdf_g = {}
         for i, branchid in enumerate(branchids):
-            for j, genid in enumerate(genids):
-                ptdf_g[(branchid,genid)] = ptdf_g_raw[i,j]
-            for j, loadid in enumerate(loadids):
-                ptdf_l[(branchid,loadid)] = ptdf_l_raw[i,j]
+            self.model.ptdf_g[branchid] = ptdf_g_raw[i,:].tolist()
 
         data = {
             'G': {None: genids},
@@ -161,10 +160,9 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
             'pgmin': pgmin,
             'cost': cost,
             'rate_a': rate_a,
-            'ptdf_g': ptdf_g,
-            'ptdf_l': ptdf_l
+            'load_injection': load_injection
         }
-
+        
         instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel)
         instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
         print('end')
