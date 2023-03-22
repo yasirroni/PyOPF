@@ -29,6 +29,7 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         self.model.load_per_bus = pyo.Set(self.model.B, within=self.model.L)
         self.model.branch_in_per_bus = pyo.Set(self.model.B, within=self.model.E)
         self.model.branch_out_per_bus = pyo.Set(self.model.B, within=self.model.E)
+        self.model.bus_per_branch = pyo.Set(self.model.E, within=self.model.B)
 
         # # ====================
         # # I.    Parameters
@@ -41,7 +42,7 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         self.model.pgmax = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.pd = pyo.Param(self.model.L, within=pyo.Reals, mutable=True)
         self.model.rate_a = pyo.Param(self.model.E, within=pyo.NonNegativeReals, mutable=True)
-        self.model.ang2pf = pyo.Param(self.model.E, self.model.B, within=pyo.Reals, default=0., mutable=True) # branch susceptance
+        self.model.ang2pf = pyo.Param(self.model.E, self.model.B, within=pyo.Reals, mutable=True) # branch susceptance
 
         self.model.cost = pyo.Param(self.model.G, self.model.ncost, within=pyo.Reals, mutable=True)
 
@@ -70,14 +71,18 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         self.model.cnst_slack_va = pyo.Constraint(self.model.slack, rule=cnst_slack_va_exp)
 
         # ====================
-        # III.c Define Flow
+        # III.c Setup Sets for defining the following constraints
+        # ====================
+        self.model.sets_balance = pyo.BuildAction(rule=define_sets_balance_exp)
+
+        # ====================
+        # III.d Define Flow
         # ====================
         self.model.cnst_pf = pyo.Constraint(self.model.E, rule=cnst_pf_exp)
 
         # ====================
-        # III.d Power Balance
+        # III.e Power Balance
         # ====================
-        self.model.sets_balance = pyo.BuildAction(rule=define_sets_balance_exp)
         self.model.cnst_power_bal = pyo.Constraint(self.model.B, rule=cnst_power_bal_exp)
 
         # ====================
@@ -87,77 +92,80 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         print('end')
 
 
-    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None) -> pyo.ConcreteModel:
-        print('instantiate model...', end=' ')
+    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
+        print('instantiate model...', end=' ', flush=True)
         gens = network['gen']
         buses = network['bus']
         branches = network['branch']
         loads = network['load']
 
-        busidxs = sorted(list(buses.keys())) # sort this for consistency between the pyomo vector and the input matpower 
-        loadidxs = sorted(list(loads.keys()))
+        busids = sorted(list(buses.keys())) # sort this for consistency between the pyomo vector and the input matpower 
+        loadids = sorted(list(loads.keys()))
 
-        branchidxs_all = sorted(list(branches.keys()))
-        branchidxs = [branch_idx for branch_idx in branchidxs_all if branches[branch_idx]['br_status']>0] # factor out not working branches
-        genidxs_all = sorted(list(gens.keys())) 
-        genidxs = [gen_idx for gen_idx in genidxs_all if gens[gen_idx]['gen_status']>0] # factor out not working generators
+        branchids_all = sorted(list(branches.keys()))
+        branchids = [branch_id for branch_id in branchids_all if branches[branch_id]['br_status']>0] # factor out not working branches
+        genids_all = sorted(list(gens.keys())) 
+        genids = [gen_id for gen_id in genids_all if gens[gen_id]['gen_status']>0] # factor out not working generators
 
         ncost = 3 # all PGLib input files have three cost coefficients
 
-        gen_per_bus = { busidx: [] for busidx in busidxs }
-        load_per_bus = { busidx: [] for busidx in busidxs }
-        branch_in_per_bus = { busidx: [] for busidx in busidxs }
-        branch_out_per_bus = { busidx: [] for busidx in busidxs }
+        gen_per_bus = { busid: [] for busid in busids }
+        load_per_bus = { busid: [] for busid in busids }
+        branch_in_per_bus = { busid: [] for busid in busids }
+        branch_out_per_bus = { busid: [] for busid in busids }
+        bus_per_branch = { branchid: set() for branchid in branchids}
 
         # Generator
         pgmax, pgmin, pg, qg, cost = {}, {}, {}, {}, {}
-        for gen_idx in genidxs:
-            gen = gens[gen_idx]
-            pgmax[gen_idx] = gen['pmax']
-            pgmin[gen_idx] = gen['pmin']
-            pg[gen_idx] = gen['pg']
-            qg[gen_idx] = gen['qg']
+        for gen_id in genids:
+            gen = gens[gen_id]
+            pgmax[gen_id] = gen['pmax']
+            pgmin[gen_id] = gen['pmin']
+            pg[gen_id] = gen['pg']
+            qg[gen_id] = gen['qg']
             cost_raw = gen['cost']
             for i in range(ncost):
-                cost[(gen_idx,i)] = cost_raw[i]
-            gen_per_bus[gen['gen_bus']].append(gen_idx)
+                cost[(gen_id,i)] = cost_raw[i]
+            gen_per_bus[gen['gen_bus']].append(gen_id)
 
         # Load 
         pd = {}
-        for load_idx in loadidxs:
-            load = loads[load_idx]
-            pd[load_idx] = load['pd']
-            load_per_bus[load['load_bus']].append(load_idx)
+        for load_id in loadids:
+            load = loads[load_id]
+            pd[load_id] = load['pd']
+            load_per_bus[load['load_bus']].append(load_id)
 
         # Bus
         slack = []
-        for bus_idx in busidxs:
-            if buses[bus_idx]['bus_type'] == 3:
-                slack.append(bus_idx)
+        for bus_id in busids:
+            if buses[bus_id]['bus_type'] == 3:
+                slack.append(bus_id)
 
         # Branch
         rate_a, dvamin, dvamax = {}, {}, {}
         ang2pf = {}
-        for branch_idx in branchidxs:
-            branch = branches[branch_idx]
+        for branch_id in branchids:
+            branch = branches[branch_id]
             rate_a_val = branch['rate_a']
             if rate_a_val == 0.: rate_a_val + 1e12
-            rate_a[branch_idx] = rate_a_val
-            dvamin[branch_idx] = branch['angmin']
-            dvamax[branch_idx] = branch['angmax']
+            rate_a[branch_id] = rate_a_val
+            dvamin[branch_id] = branch['angmin']
+            dvamax[branch_id] = branch['angmax']
             f_bus = branch['f_bus']
             t_bus = branch['t_bus']
             r = branch['br_r']
             x = branch['br_x']
             b = -x / (r**2 + x**2) # susceptance
-            ang2pf_f_val = ang2pf.get((branch_idx,f_bus), 0.)
+            ang2pf_f_val = ang2pf.get((branch_id,f_bus), 0.)
             ang2pf_f_val += b
-            ang2pf_t_val = ang2pf.get((branch_idx,t_bus), 0.)
+            ang2pf_t_val = ang2pf.get((branch_id,t_bus), 0.)
             ang2pf_t_val -= b
-            ang2pf[(branch_idx,f_bus)] = ang2pf_f_val
-            ang2pf[(branch_idx,t_bus)] = ang2pf_t_val
-            branch_out_per_bus[branch['f_bus']].append(branch_idx) # from buses
-            branch_in_per_bus[branch['t_bus']].append(branch_idx)
+            ang2pf[(branch_id,f_bus)] = ang2pf_f_val
+            ang2pf[(branch_id,t_bus)] = ang2pf_t_val
+            branch_out_per_bus[f_bus].append(branch_id) # from buses
+            branch_in_per_bus[t_bus].append(branch_id)
+            bus_per_branch[branch_id].add(f_bus)
+            bus_per_branch[branch_id].add(t_bus)
         
         if init_var is not None:
             pg_init = init_var['pg']
@@ -165,15 +173,15 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
             pf_init = init_var['pf']
         else:
             pg_init = pg
-            va_init = { idx: 0. for idx in busidxs }
-            pf_init = { idx: 0. for idx in branchidxs }
+            va_init = { bus_id: 0. for bus_id in busids }
+            pf_init = { branch_id: 0. for branch_id in branchids }
 
 
         data = {
-            'G': {None: genidxs},
-            'B': {None: busidxs},
-            'E': {None: branchidxs},
-            'L': {None: loadidxs},
+            'G': {None: genids},
+            'B': {None: busids},
+            'E': {None: branchids},
+            'L': {None: loadids},
             'slack': {None: slack},
             'pg_init': pg_init,
             'va_init': va_init,
@@ -192,10 +200,11 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         self.model.load_per_bus_raw = load_per_bus
         self.model.branch_in_per_bus_raw = branch_in_per_bus
         self.model.branch_out_per_bus_raw = branch_out_per_bus
+        self.model.bus_per_branch_raw = bus_per_branch
 
-        instance = self.model.create_instance({None: data}) # create instance (ConcreteModel), 
+        instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel)
         instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
-        print('end')
+        print('end', flush=True)
         return instance
 
 
