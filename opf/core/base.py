@@ -15,5 +15,5 @@ class AbstractPowerBaseModel(ABC):
     def _build_model(self) -> None: pass
 
     @abstractmethod
-    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None) -> pyo.ConcreteModel: pass
+    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel: pass
 
