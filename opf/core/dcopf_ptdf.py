@@ -73,7 +73,8 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
         self.model.obj_cost = pyo.Objective(sense=pyo.minimize, rule=obj_cost_exp)
         print('end')
 
-    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None) -> pyo.ConcreteModel:
+
+    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
         print('instantiate model...', end=' ', flush=True)
         gens = network['gen']
         buses = network['bus']
@@ -164,8 +165,7 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
             'ptdf_l': ptdf_l
         }
 
-        # print('create_instance', flush=True)
-        instance = self.model.create_instance({None: data}) # create instance (ConcreteModel), 
+        instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel)
         instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
         print('end')
         return instance
