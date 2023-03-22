@@ -34,19 +34,19 @@ pip install opf
 
 2. :o:DC-OPF (DC Optimal Power Flow)
     ```python
-    model = opf.build_model('dcopf') # base DCOPF model
+    model = opf.build_model('dcopf')      # base DC-OPF model
+    model = opf.build_model('dcopf-ptdf') # DC-OPF model using PTDF
     ```
     - Linear approximation to AC-OPF.
     - Also support PTDF (power transfer distribution factor) based formulation.
-    - Only use active power generations and bus voltage angles as variables.
+    - Only use active power generations and bus voltage angles (for base DC-OPF) as variables.
+    - Like AC-OPF, PGLib m-files can be taken as input.
 
 3. :x:SC-DC-OPF (Security Constrained DC Optimal Power Flow)
     -  To be added
 
-
 4. :x:SC-AC-OPF (Security Constrained AC Optimal Power Flow)
     -  To be added
-
 
 ## Warmstarting
 * **PyOPF** supports primal and dual warmstarting. Documentation is to be added.

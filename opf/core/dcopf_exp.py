@@ -17,28 +17,28 @@ def cnst_slack_va_exp(m, s):
     return m.va[s] == 0.
 
 def cnst_pf_exp(m, e):
-    return m.pf[e] - quicksum(m.ang2pf[e,b]*m.va[b] for b in m.B) == 0.
+    return m.pf[e] - quicksum(m.ang2pf[e,b]*m.va[b] for b in m.bus_per_branch[e]) == 0.
 
 def define_sets_balance_exp(m):
-    for busidx, genlist in m.gen_per_bus_raw.items():
-        if len(genlist) > 0:
-            for genidx in genlist:
-                m.gen_per_bus[busidx].add(genidx)
+    for busid, genlist in m.gen_per_bus_raw.items():
+        for genid in genlist:
+            m.gen_per_bus[busid].add(genid)
 
-    for busidx, loadlist in m.load_per_bus_raw.items():
-        if len(loadlist) > 0:
-            for loadidx in loadlist:
-                m.load_per_bus[busidx].add(loadidx)
+    for busid, loadlist in m.load_per_bus_raw.items():
+        for loadid in loadlist:
+            m.load_per_bus[busid].add(loadid)
 
-    for busidx, branchlist in m.branch_in_per_bus_raw.items():
-        if len(branchlist) > 0:
-            for branchidx in branchlist:
-                m.branch_in_per_bus[busidx].add(branchidx)
+    for busid, branchlist in m.branch_in_per_bus_raw.items():
+        for branchid in branchlist:
+            m.branch_in_per_bus[busid].add(branchid)
     
-    for busidx, branchlist in m.branch_out_per_bus_raw.items():
-        if len(branchlist) > 0:
-            for branchidx in branchlist:
-                m.branch_out_per_bus[busidx].add(branchidx)
+    for busid, branchlist in m.branch_out_per_bus_raw.items():
+        for branchid in branchlist:
+            m.branch_out_per_bus[busid].add(branchid)
+
+    for branchid, buslist in m.bus_per_branch_raw.items():
+        for busid in buslist:
+            m.bus_per_branch[branchid].add(busid)
 
 def cnst_power_bal_exp(m, b):
     return quicksum(m.pf[e] for e in m.branch_out_per_bus[b]) - quicksum(m.pf[e] for e in m.branch_in_per_bus[b])\

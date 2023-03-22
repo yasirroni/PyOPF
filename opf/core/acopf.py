@@ -17,7 +17,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         """ Define the (abstract) AC-OPF optimization model. 
             This is enabled without having the specific parameter values.
         """
-        print('build model...', end=' ')
+        print('build model...', end=' ', flush=True)
         
         self.model.B = pyo.Set() # bus indices
         self.model.G = pyo.Set() # generator indices
@@ -140,11 +140,11 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         # ====================
         self.model.obj_cost = pyo.Objective(sense=pyo.minimize, rule=obj_cost_exp)
 
-        print('end')
+        print('end', flush=True)
 
 
-    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None) -> pyo.ConcreteModel:
-        print('instantiate model...', end=' ')
+    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
+        print('instantiate model...', end=' ', flush=True)
         
         gens = network['gen']
         buses = network['bus']
@@ -152,96 +152,96 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         loads = network['load']
         shunts = network['shunt']
 
-        busidxs = sorted(list(buses.keys())) # sort this for consistency between the pyomo vector and the input matpower 
-        loadidxs = sorted(list(loads.keys()))
-        shuntidxs = sorted(list(shunts.keys()))
+        busids = sorted(list(buses.keys())) # sort this for consistency between the pyomo vector and the input matpower 
+        loadids = sorted(list(loads.keys()))
+        shuntids = sorted(list(shunts.keys()))
 
-        branchidxs_all = sorted(list(branches.keys()))
-        branchidxs = [branch_idx for branch_idx in branchidxs_all if branches[branch_idx]['br_status']>0] # factor out not working branches
-        genidxs_all = sorted(list(gens.keys())) 
-        genidxs = [gen_idx for gen_idx in genidxs_all if gens[gen_idx]['gen_status']>0] # factor out not working generators
+        branchids_all = sorted(list(branches.keys()))
+        branchids = [branch_id for branch_id in branchids_all if branches[branch_id]['br_status']>0] # factor out not working branches
+        genids_all = sorted(list(gens.keys())) 
+        genids = [gen_id for gen_id in genids_all if gens[gen_id]['gen_status']>0] # factor out not working generators
 
         ncost = 3 # all PGLib input files have three cost coefficients
         
-        gen_per_bus = { busidx: [] for busidx in busidxs }
-        load_per_bus = { busidx: [] for busidx in busidxs }
-        branch_in_per_bus = { busidx: [] for busidx in busidxs }
-        branch_out_per_bus = { busidx: [] for busidx in busidxs }
-        shunt_per_bus = { busidx: [] for busidx in busidxs }
+        gen_per_bus = { busid: [] for busid in busids }
+        load_per_bus = { busid: [] for busid in busids }
+        branch_in_per_bus = { busid: [] for busid in busids }
+        branch_out_per_bus = { busid: [] for busid in busids }
+        shunt_per_bus = { busid: [] for busid in busids }
 
         # Generator
         pgmax, pgmin, qgmax, qgmin = {}, {}, {}, {}
         pg, qg = {}, {}
         cost = {}
-        for gen_idx in genidxs:
-            gen = gens[gen_idx]
-            pgmax[gen_idx] = gen['pmax']
-            pgmin[gen_idx] = gen['pmin']
-            qgmax[gen_idx] = gen['qmax']
-            qgmin[gen_idx] = gen['qmin']
-            pg[gen_idx] = gen['pg']
-            qg[gen_idx] = gen['qg']
+        for gen_id in genids:
+            gen = gens[gen_id]
+            pgmax[gen_id] = gen['pmax']
+            pgmin[gen_id] = gen['pmin']
+            qgmax[gen_id] = gen['qmax']
+            qgmin[gen_id] = gen['qmin']
+            pg[gen_id] = gen['pg']
+            qg[gen_id] = gen['qg']
             cost_raw = gen['cost']
             for i in range(ncost):
-                cost[(gen_idx,i)] = cost_raw[i]
-            gen_per_bus[gen['gen_bus']].append(gen_idx)
+                cost[(gen_id,i)] = cost_raw[i]
+            gen_per_bus[gen['gen_bus']].append(gen_id)
         
         # Load
         pd, qd = {}, {}
-        for load_idx in loadidxs:
-            load = loads[load_idx]
-            pd[load_idx] = load['pd']
-            qd[load_idx] = load['qd']
-            load_per_bus[load['load_bus']].append(load_idx)
+        for load_id in loadids:
+            load = loads[load_id]
+            pd[load_id] = load['pd']
+            qd[load_id] = load['qd']
+            load_per_bus[load['load_bus']].append(load_id)
 
         # Shunt
         gs, bs = {}, {}
-        for shunt_idx in shuntidxs:
-            shunt = shunts[shunt_idx]
-            gs[shunt_idx] = shunt['gs']
-            bs[shunt_idx] = shunt['bs']
-            shunt_per_bus[shunt['shunt_bus']].append(shunt_idx)
+        for shunt_id in shuntids:
+            shunt = shunts[shunt_id]
+            gs[shunt_id] = shunt['gs']
+            bs[shunt_id] = shunt['bs']
+            shunt_per_bus[shunt['shunt_bus']].append(shunt_id)
 
         # Bus
         vmmax, vmmin = {}, {}
         slack = []
-        for bus_idx in busidxs:
-            bus = buses[bus_idx]
-            vmmax[bus_idx] = bus['vmax']
-            vmmin[bus_idx] = bus['vmin']
+        for bus_id in busids:
+            bus = buses[bus_id]
+            vmmax[bus_id] = bus['vmax']
+            vmmin[bus_id] = bus['vmin']
             bustype = bus['bus_type']
             if bustype == 3:
-                slack.append(bus_idx)
+                slack.append(bus_id)
         
         # Branch
         rate_a = {}
         bus_from, bus_to = {}, {}
         g_from, g_to, b_from, b_to, T_R, T_I, T_m, g, b = {}, {}, {}, {}, {}, {}, {}, {}, {}
         dvamin, dvamax = {}, {}
-        for branch_idx in branchidxs:
-            branch = branches[branch_idx]
+        for branch_id in branchids:
+            branch = branches[branch_id]
             rate_a_val = branch['rate_a']
             if rate_a_val == 0.: rate_a_val + 1e12
-            rate_a[branch_idx] = rate_a_val
-            bus_from[branch_idx] = branch['f_bus']
-            bus_to[branch_idx] = branch['t_bus']
-            g_from[branch_idx] = branch['g_fr']
-            g_to[branch_idx] = branch['g_to']
-            b_from[branch_idx] = branch['b_fr']
-            b_to[branch_idx] = branch['b_to']
+            rate_a[branch_id] = rate_a_val
+            bus_from[branch_id] = branch['f_bus']
+            bus_to[branch_id] = branch['t_bus']
+            g_from[branch_id] = branch['g_fr']
+            g_to[branch_id] = branch['g_to']
+            b_from[branch_id] = branch['b_fr']
+            b_to[branch_id] = branch['b_to']
             T_m_val = branch['tap']
             shift = branch['shift']
-            T_R[branch_idx] = T_m_val * math.cos(shift)
-            T_I[branch_idx] = T_m_val * math.sin(shift)
-            T_m[branch_idx] = T_m_val
+            T_R[branch_id] = T_m_val * math.cos(shift)
+            T_I[branch_id] = T_m_val * math.sin(shift)
+            T_m[branch_id] = T_m_val
             r = branch['br_r']
             x = branch['br_x']
-            g[branch_idx] = r / (r**2 + x**2)
-            b[branch_idx] = -x / (r**2 + x**2)
-            dvamin[branch_idx] = branch['angmin']
-            dvamax[branch_idx] = branch['angmax']
-            branch_out_per_bus[branch['f_bus']].append(branch_idx) # from buses
-            branch_in_per_bus[branch['t_bus']].append(branch_idx)
+            g[branch_id] = r / (r**2 + x**2)
+            b[branch_id] = -x / (r**2 + x**2)
+            dvamin[branch_id] = branch['angmin']
+            dvamax[branch_id] = branch['angmax']
+            branch_out_per_bus[branch['f_bus']].append(branch_id) # from buses
+            branch_in_per_bus[branch['t_bus']].append(branch_id)
 
         if init_var is not None:
             pg_init = init_var['pg']
@@ -255,19 +255,19 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         else:
             pg_init = pg
             qg_init = qg
-            vm_init = { idx: 1. for idx in busidxs }
-            va_init = { idx: 0. for idx in busidxs }
-            pf_from_init = { idx: 0. for idx in branchidxs }
-            pf_to_init = { idx: 0. for idx in branchidxs }
-            qf_from_init = { idx: 0. for idx in branchidxs }
-            qf_to_init = { idx: 0. for idx in branchidxs }
+            vm_init = { id: 1. for id in busids }
+            va_init = { id: 0. for id in busids }
+            pf_from_init = { id: 0. for id in branchids }
+            pf_to_init = { id: 0. for id in branchids }
+            qf_from_init = { id: 0. for id in branchids }
+            qf_to_init = { id: 0. for id in branchids }
                 
         data = {
-            'G': {None: genidxs},
-            'B': {None: busidxs},
-            'E': {None: branchidxs},
-            'L': {None: loadidxs},
-            'S': {None: shuntidxs},
+            'G': {None: genids},
+            'B': {None: busids},
+            'E': {None: branchids},
+            'L': {None: loadids},
+            'S': {None: shuntids},
             'pg_init': pg_init,
             'qg_init': qg_init,
             'vm_init': vm_init,
@@ -303,10 +303,10 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.branch_out_per_bus_raw = branch_out_per_bus
         self.model.shunt_per_bus_raw = shunt_per_bus
         
-        instance = self.model.create_instance({None: data}) # create instance (ConcreteModel), 
+        instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel), 
         instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
         # note that self.model is not duplicated because it is desired to be AbstractModel 
         # for taking different types of problem instances consistently.
 
-        print('end')
+        print('end', flush=True)
         return instance
