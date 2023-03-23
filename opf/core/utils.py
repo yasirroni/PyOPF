@@ -39,7 +39,7 @@ def _compute_ptdf(S_br, S_b, I_g, I_l, slack):
     y_l = solve_triangular(L, I_l, lower=True)
     y_l = D_inv @ y_l
     x_l = solve_triangular(L.T, y_l, lower=False)
-
+    
     x_g[slack[0],:] = 0.
     x_l[slack[0],:] = 0.
 
@@ -113,7 +113,7 @@ def compute_generator_incidence_matrix(network):
     genids_all = sorted(list(gens.keys()))
     genids = [gen_id for gen_id in genids_all if gens[gen_id]['gen_status']>0] # factor out not working generators
 
-    G = len(gens)
+    G = len(genids)
     B = len(buses)
 
     row, col = [], []
@@ -121,7 +121,7 @@ def compute_generator_incidence_matrix(network):
         gen = gens[genid]
         gen_bus_id = gen['gen_bus']
         row.append(buses[gen_bus_id]['index'])
-        col.append(gen['index'])
+        col.append(i)
 
     row = np.asarray(row)
     col = np.asarray(col)
