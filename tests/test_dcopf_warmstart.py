@@ -11,6 +11,7 @@ class DCOPFWarmStartTest(unittest.TestCase):
         network = opf.parse_file(matpower_fn)
         instance = model.instantiate_model(network)
         solver = pyo.SolverFactory("ipopt")
+        solver.options['linear_solver'] = 'ma27'
         result = solver.solve(instance, tee=False)
 
         warmstart_dict = {

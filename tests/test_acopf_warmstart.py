@@ -10,6 +10,7 @@ class ACOPFWarmStartTest(unittest.TestCase):
         self.assertEqual(model.model_type, 'acopf')
         network = opf.parse_file(matpower_fn)
         solver = pyo.SolverFactory("ipopt")
+        solver.options['linear_solver'] = 'ma27'
 
         instance = model.instantiate_model(network)
         result = solver.solve(instance, tee=False) # solve first without warmstart

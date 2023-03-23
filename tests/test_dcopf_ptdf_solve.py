@@ -31,6 +31,7 @@ class DCOPFPTDFSolveTest(unittest.TestCase):
         network = opf.parse_file(matpower_fn)
         instance = model.instantiate_model(network)
         solver = pyo.SolverFactory("ipopt")
+        solver.options['linear_solver'] = 'ma27'
         results = solver.solve(instance, tee=False)
 
         self.assertEqual(results.solver.termination_condition, 'optimal')
