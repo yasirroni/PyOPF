@@ -20,8 +20,7 @@ def compute_ptdf(network:Dict[str,Any]) ->  Tuple[Dict[str,Any], Dict[str,Any]]:
     return _compute_ptdf(S_br, S_b, I_g, I_l, slack)
 
 
-def _compute_ptdf(S_br, S_b, I_g, I_l, slack):
-    
+def _compute_ptdf(S_br, S_b, I_g, I_l, slack, tol=1e-13):
     # # LDLT decomposition
     # Theoretically, LDLT should give better performance than LU decomposition for the symmetric matrix, but in reality, it performs worse.
     # This is because in Python, there is no canonical LDLT based linear system `solve` function.
@@ -49,8 +48,10 @@ def _compute_ptdf(S_br, S_b, I_g, I_l, slack):
     # compute ptdf for gen and load
     ptdf_g = S_br @ x_g
     ptdf_l = S_br @ x_l
-    return ptdf_g, ptdf_l
 
+    ptdf_g = np.where(np.abs(ptdf_g)<=tol, 0., ptdf_g) # this is for facilitating Gurobi
+    ptdf_l = np.where(np.abs(ptdf_l)<=tol, 0., ptdf_l)
+    return ptdf_g, ptdf_l
 
 
 def compute_branch_susceptance_matrix(network):
