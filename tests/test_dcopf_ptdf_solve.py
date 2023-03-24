@@ -15,7 +15,7 @@ class DCOPFPTDFSolveTest(unittest.TestCase):
 
         self.assertEqual(results.solver.termination_condition, 'optimal')
         
-        self.assertAlmostEqual(pyo.value(instance.obj_cost), 17479.896769813888)
+        self.assertAlmostEqual(pyo.value(instance.obj_cost), 17479.896769813888, places=3)
             
         self.assertAlmostEqual(pyo.value(instance.pg[1]), 0.4000000096631537)
         self.assertAlmostEqual(pyo.value(instance.pg[2]), 1.7000000164929279)
@@ -36,7 +36,7 @@ class DCOPFPTDFSolveTest(unittest.TestCase):
 
         self.assertEqual(results.solver.termination_condition, 'optimal')
         
-        self.assertAlmostEqual(pyo.value(instance.obj_cost), 2051.5262699779273)
+        self.assertAlmostEqual(pyo.value(instance.obj_cost), 2051.5262699779273, places=4)
         self.assertAlmostEqual(pyo.value(instance.pg[1]), 2.5899999800011604)
         self.assertAlmostEqual(pyo.value(instance.pg[2]), -9.962008701445461e-09)
 

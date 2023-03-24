@@ -1,18 +1,11 @@
 import pyomo.environ as pyo
 from pyomo.core.util import quicksum
+from pyomo.core.expr.numeric_expr import LinearExpression
 
-def cnst_pg_bound_min_exp(m, g):
-    return m.pgmin[g] - m.pg[g] <= 0. 
 
-def cnst_pg_bound_max_exp(m, g):
-    return m.pg[g] - m.pgmax[g] <= 0. 
-
-def cnst_pf_bound_min_exp(m, e):
-    return -m.rate_a[e] - m.pf[e] <= 0.
-
-def cnst_pf_bound_max_exp(m, e):
-    return m.pf[e] - m.rate_a[e] <= 0.
-
+def pf_bound_exp(m, e):
+    return (-m.rate_a[e], m.rate_a[e])
+    
 def cnst_slack_va_exp(m, s):
     return m.va[s] == 0.
 
@@ -44,5 +37,12 @@ def cnst_power_bal_exp(m, b):
     return quicksum(m.pf[e] for e in m.branch_out_per_bus[b]) - quicksum(m.pf[e] for e in m.branch_in_per_bus[b])\
             - quicksum(m.pg[g] for g in m.gen_per_bus[b]) + quicksum(m.pd[l] for l in m.load_per_bus[b]) == 0.
 
-def obj_cost_exp(m, g):
-    return quicksum(m.pg[g]*m.pg[g]*m.cost[g,0] + m.pg[g]*m.cost[g,1] + m.cost[g,2] for g in m.G)
+# ================================================================================
+# Only for DCOPF-PTDF
+# ================================================================================
+def cnst_power_bal_ptdf_exp(m):
+    return quicksum(m.pd[l] for l in m.L) == quicksum(m.pg[g] for g in m.G)
+
+def cnst_pf_ptdf_exp(m, e):
+    m.gen_injection = LinearExpression(constant=0, linear_coefs=m.ptdf_g[e], linear_vars=[m.pg[g] for g in m.G])
+    return (-m.rate_a[e], m.load_injection[e] - m.gen_injection, m.rate_a[e])
