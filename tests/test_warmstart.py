@@ -10,7 +10,7 @@ class WarmStartTest(unittest.TestCase):
         self.assertEqual(model.model_type, 'acopf')
         network = opf.parse_file(matpower_fn)
         solver = pyo.SolverFactory("ipopt")
-        solver.options['linear_solver'] = 'ma27'
+        # solver.options['linear_solver'] = 'ma27'
 
         instance = model.instantiate(network)
         result = solver.solve(instance, tee=False) # solve first without warmstart
@@ -71,7 +71,7 @@ class WarmStartTest(unittest.TestCase):
         network = opf.parse_file(matpower_fn)
         instance = model.instantiate(network)
         solver = pyo.SolverFactory("ipopt")
-        solver.options['linear_solver'] = 'ma27'
+        # solver.options['linear_solver'] = 'ma27'
         result = solver.solve(instance, tee=False)
 
         warmstart_dict = {
@@ -137,7 +137,7 @@ class WarmStartTest(unittest.TestCase):
         network = opf.parse_file(matpower_fn)
         instance = model.instantiate(network)
         solver = pyo.SolverFactory("ipopt")
-        solver.options['linear_solver'] = 'ma27'
+        # solver.options['linear_solver'] = 'ma27'
         result = solver.solve(instance, tee=False)
 
         warmstart_dict = {

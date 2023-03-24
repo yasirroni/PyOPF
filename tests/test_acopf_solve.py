@@ -53,7 +53,7 @@ class ACOPFSolveVariantTest(unittest.TestCase):
 
         # then solve
         solver = pyo.SolverFactory("ipopt")
-        solver.options['linear_solver'] = 'ma27'
+        # solver.options['linear_solver'] = 'ma27'
         results = solver.solve(instance, tee=True)
         self.assertAlmostEqual(pyo.value(instance.obj_cost), 12250.188059667513) # cost is decreased to meet lower demand
         self.assertAlmostEqual(pyo.value(instance.pg[1]), 0.4000000096567134)
