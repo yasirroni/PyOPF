@@ -85,7 +85,7 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         print('end', flush=True)
 
 
-    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
+    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
         print('instantiate model...', end=' ', flush=True)
         gens = network['gen']
         buses = network['bus']

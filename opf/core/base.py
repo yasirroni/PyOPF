@@ -15,7 +15,7 @@ class AbstractPowerBaseModel(ABC):
     def _build_model(self) -> None: pass
 
     @abstractmethod
-    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel: pass
+    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel: pass
 
     def append_suffix(self, instance:pyo.ConcreteModel) -> None:
         """ Generate suffix to access the duals for constraints and bounds. 

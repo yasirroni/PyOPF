@@ -9,7 +9,7 @@ class DCOPFSolveTest_case5(unittest.TestCase):
         model = opf.build_model('dcopf')
         self.assertEqual(model.model_type, 'dcopf')
         network = opf.parse_file(matpower_fn)
-        instance = model.instantiate_model(network)
+        instance = model.instantiate(network)
         solver = pyo.SolverFactory("ipopt")
         solver.options['linear_solver'] = 'ma27'
         results = solver.solve(instance, tee=False)
@@ -37,7 +37,7 @@ class DCOPFSolveTest_case14(unittest.TestCase):
         model = opf.build_model('dcopf')
         self.assertEqual(model.model_type, 'dcopf')
         network = opf.parse_file(matpower_fn)
-        instance = model.instantiate_model(network)
+        instance = model.instantiate(network)
         solver = pyo.SolverFactory("ipopt")
         results = solver.solve(instance, tee=False)
 

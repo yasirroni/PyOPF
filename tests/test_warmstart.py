@@ -12,7 +12,7 @@ class WarmStartTest(unittest.TestCase):
         solver = pyo.SolverFactory("ipopt")
         solver.options['linear_solver'] = 'ma27'
 
-        instance = model.instantiate_model(network)
+        instance = model.instantiate(network)
         result = solver.solve(instance, tee=False) # solve first without warmstart
 
         warmstart_dict = {
@@ -48,7 +48,7 @@ class WarmStartTest(unittest.TestCase):
             bound_ws[str(v)] = bound_ws_var  
         print("bound_ws", bound_ws)
         # instantiate new model
-        instance2 = model.instantiate_model(network)
+        instance2 = model.instantiate(network)
         opf.setup_warmstart(instance2, warmstart_dict)
 
         # setup IPOPT options for warmstarting
@@ -69,7 +69,7 @@ class WarmStartTest(unittest.TestCase):
         model = opf.build_model('dcopf')
         self.assertEqual(model.model_type, 'dcopf')
         network = opf.parse_file(matpower_fn)
-        instance = model.instantiate_model(network)
+        instance = model.instantiate(network)
         solver = pyo.SolverFactory("ipopt")
         solver.options['linear_solver'] = 'ma27'
         result = solver.solve(instance, tee=False)
@@ -87,7 +87,7 @@ class WarmStartTest(unittest.TestCase):
                 primal_ws_var[str(idx)] = v[idx].value
             primal_ws[str(v)] = primal_ws_var
 
-        instance_primal_only_ws = model.instantiate_model(network)
+        instance_primal_only_ws = model.instantiate(network)
         opf.setup_warmstart(instance_primal_only_ws, warmstart_dict)
 
         # setup IPOPT options for warmstarting
@@ -123,7 +123,7 @@ class WarmStartTest(unittest.TestCase):
 
         # warmstart with both primal and dual solutions
         solver.options['max_iter'] = 2
-        instance_ws = model.instantiate_model(network)
+        instance_ws = model.instantiate(network)
         opf.setup_warmstart(instance_ws, warmstart_dict)
         result_ws = solver.solve(instance_ws, tee=False)
         
@@ -135,7 +135,7 @@ class WarmStartTest(unittest.TestCase):
         model = opf.build_model('dcopf-ptdf')
         self.assertEqual(model.model_type, 'dcopf-ptdf')
         network = opf.parse_file(matpower_fn)
-        instance = model.instantiate_model(network)
+        instance = model.instantiate(network)
         solver = pyo.SolverFactory("ipopt")
         solver.options['linear_solver'] = 'ma27'
         result = solver.solve(instance, tee=False)
@@ -154,7 +154,7 @@ class WarmStartTest(unittest.TestCase):
                 primal_ws_var[str(idx)] = v[idx].value
             primal_ws[str(v)] = primal_ws_var
 
-        instance_primal_only_ws = model.instantiate_model(network)
+        instance_primal_only_ws = model.instantiate(network)
         opf.setup_warmstart(instance_primal_only_ws, warmstart_dict)
 
         # setup IPOPT options for warmstarting
@@ -190,7 +190,7 @@ class WarmStartTest(unittest.TestCase):
 
         # warmstart with both primal and dual solutions
         solver.options['max_iter'] = 2
-        instance_ws = model.instantiate_model(network)
+        instance_ws = model.instantiate(network)
         opf.setup_warmstart(instance_ws, warmstart_dict)
         result_ws = solver.solve(instance_ws, tee=False)
         

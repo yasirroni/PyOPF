@@ -9,7 +9,7 @@ class ACOPFSolveTest(unittest.TestCase):
         model = opf.build_model('acopf')
         self.assertEqual(model.model_type, 'acopf')
         network = opf.parse_file(matpower_fn)
-        instance = model.instantiate_model(network)
+        instance = model.instantiate(network)
         solver = pyo.SolverFactory("ipopt")
         results = solver.solve(instance, tee=False)
 
@@ -46,7 +46,7 @@ class ACOPFSolveVariantTest(unittest.TestCase):
         model = opf.build_model('acopf')
         self.assertEqual(model.model_type, 'acopf')
         network = opf.parse_file(matpower_fn)
-        instance = model.instantiate_model(network)
+        instance = model.instantiate(network)
 
         # after instantiating, we can change some parameter values
         instance.pd[1] = 1. # it was originally 3.
