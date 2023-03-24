@@ -193,11 +193,13 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
 
         # Bus
         vmmax, vmmin = {}, {}
+        vm_init_val = {}
         slack = []
         for bus_id in busids:
             bus = buses[bus_id]
             vmmax[bus_id] = bus['vmax']
             vmmin[bus_id] = bus['vmin']
+            vm_init_val[bus_id] = max(bus['vmin'], 1.)
             bustype = bus['bus_type']
             if bustype == 3:
                 slack.append(bus_id)
@@ -244,7 +246,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         else:
             pg_init = pg
             qg_init = qg
-            vm_init = { id: 1. for id in busids }
+            vm_init = vm_init_val
             va_init = { id: 0. for id in busids }
             pf_from_init = { id: 0. for id in branchids }
             pf_to_init = { id: 0. for id in branchids }
