@@ -4,9 +4,10 @@ import numpy as np
 import math
 
 from .base import AbstractPowerBaseModel
-from .dcopf_exp import *
-from .dcopf_ptdf_exp import *
+from .dcopf_exp import cnst_power_bal_ptdf_exp, cnst_pf_ptdf_exp
+from .acopf_exp import pg_bound_exp, obj_cost_exp
 from .utils import compute_ptdf
+
 
 class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
     """ Abstract DC-OPF using PTDF (power transfer distribution factor) optimization model class.  
@@ -41,31 +42,21 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
         # # ====================
         # # II.    Variables
         # # ====================
-        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, within=pyo.Reals) # active generation (injection), continuous
-        self.model.pf = pyo.Var(self.model.E, initialize=self.model.pf_init, within=pyo.Reals) # active flow (at each branch)
+        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=pg_bound_exp, within=pyo.Reals) # active generation (injection), continuous
 
         # ====================
         # III.   Constraints
         # ====================
 
         # ====================
-        # III.a     Bounds
+        # III.a Power Flow
         # ====================
-        self.model.cnst_pg_bound_min = pyo.Constraint(self.model.G, rule=cnst_pg_bound_min_exp)
-        self.model.cnst_pg_bound_max = pyo.Constraint(self.model.G, rule=cnst_pg_bound_max_exp)
-        self.model.cnst_pf_bound_min = pyo.Constraint(self.model.E, rule=cnst_pf_bound_min_exp)
-        self.model.cnst_pf_bound_max = pyo.Constraint(self.model.E, rule=cnst_pf_bound_max_exp)
+        # self.model.cnst_pg_bound = pyo.Constraint(self.model.G, rule=cnst_pg_bound_exp)
+        self.model.cnst_pf_ptdf = pyo.Constraint(self.model.E, rule=cnst_pf_ptdf_exp)
 
         # ====================
-        # III.b Define Flow
+        # III.b Power Balance
         # ====================
-        self.model.cnst_pf = pyo.Constraint(self.model.E, rule=cnst_pf_ptdf_exp)
-        # self.model.cnst_pf = pyo.Constraint(rule=cnst_pf_ptdf_exp)
-
-        # ====================
-        # III.c Power Balance
-        # ====================
-        # self.model.define_injections = pyo.BuildAction(rule=define_sets_balance_exp)
         self.model.cnst_power_bal = pyo.Constraint(rule=cnst_power_bal_ptdf_exp)
 
         # ====================
@@ -75,7 +66,7 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
         print('end', flush=True)
 
 
-    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
+    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
         print('instantiate model...', end=' ', flush=True)
         gens = network['gen']
         buses = network['bus']
@@ -127,7 +118,6 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
             rate_a_val = branch['rate_a']
             if rate_a_val == 0.: rate_a_val + 1e12
             rate_a[branch_id] = rate_a_val
-
         
         if init_var is not None:
             pg_init = init_var['pg']
@@ -137,6 +127,7 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
             pf_init = { id: 0. for id in branchids }
 
         ptdf_g_raw, ptdf_l_raw = compute_ptdf(network)
+
         load_injection_raw = ptdf_l_raw @ pdvec
         load_injection = {}
         for i, branch_id in enumerate(branchids):
@@ -164,6 +155,7 @@ class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
         }
         
         instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel)
-        instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
+        self.append_suffix(instance)
+
         print('end', flush=True)
         return instance

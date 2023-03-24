@@ -73,7 +73,7 @@ pip install opf
     network = opf.parse_file("./data/pglib_opf_case5_pjm.m")
 
     # create the concrete model
-    instance = model.instantiate_model(network)
+    instance = model.instantiate(network)
 
     # define the optimization solver
     solver = SolverFactory("ipopt")

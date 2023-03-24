@@ -33,9 +33,9 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.branch_out_per_bus = pyo.Set(self.model.B, within=self.model.E)
         self.model.shunt_per_bus = pyo.Set(self.model.B, within=self.model.S)
 
-        # # ====================
-        # # I.    Parameters
-        # # ====================
+        # ====================
+        # I.    Parameters
+        # ====================
         self.model.pg_init = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.qg_init = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.vm_init = pyo.Param(self.model.B, within=pyo.Reals, mutable=True)
@@ -79,9 +79,9 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         # # ====================
         # # II.    Variables
         # # ====================
-        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, within=pyo.Reals) # active generation (injection), continuous
-        self.model.qg = pyo.Var(self.model.G, initialize=self.model.qg_init, within=pyo.Reals) # reactive generation (injection), continuous
-        self.model.vm = pyo.Var(self.model.B, initialize=self.model.vm_init, within=pyo.Reals) # voltage magnitude, continuous
+        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=pg_bound_exp, within=pyo.Reals) # active generation (injection), continuous
+        self.model.qg = pyo.Var(self.model.G, initialize=self.model.qg_init, bounds=qg_bound_exp, within=pyo.Reals) # reactive generation (injection), continuous
+        self.model.vm = pyo.Var(self.model.B, initialize=self.model.vm_init, bounds=vm_bound_exp, within=pyo.Reals) # voltage magnitude, continuous
         self.model.va = pyo.Var(self.model.B, initialize=self.model.va_init, within=pyo.Reals) # voltage angle, continuous
 
         self.model.pf_from = pyo.Var(self.model.E, initialize=self.model.pf_from_init, within=pyo.Reals) # active power flow (from), continuous
@@ -94,28 +94,18 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         # ====================
 
         # ====================
-        # III.a     Bounds
-        # ====================
-        self.model.cnst_pg_bound_min = pyo.Constraint(self.model.G, rule=cnst_pg_bound_min_exp)
-        self.model.cnst_pg_bound_max = pyo.Constraint(self.model.G, rule=cnst_pg_bound_max_exp)
-        self.model.cnst_qg_bound_min = pyo.Constraint(self.model.G, rule=cnst_qg_bound_min_exp)
-        self.model.cnst_qg_bound_max = pyo.Constraint(self.model.G, rule=cnst_qg_bound_max_exp)
-        self.model.cnst_vm_bound_min = pyo.Constraint(self.model.B, rule=cnst_vm_bound_min_exp)
-        self.model.cnst_vm_bound_max = pyo.Constraint(self.model.B, rule=cnst_vm_bound_max_exp)
-
-        # ====================
-        # III.b Voltage Angle at Slack Bus
+        # III.a Voltage Angle at Slack Bus
         # ====================
         self.model.cnst_slack_va = pyo.Constraint(self.model.slack, rule=cnst_slack_va_exp)
 
         # ====================
-        # III.c Thermal Limits
+        # III.b Thermal Limits
         # ====================
         self.model.cnst_thermal_branch_from = pyo.Constraint(self.model.E, rule=cnst_thermal_branch_from_exp)
         self.model.cnst_thermal_branch_to   = pyo.Constraint(self.model.E, rule=cnst_thermal_branch_to_exp)
 
         # ====================
-        # III.d Ohm's Law
+        # III.c Ohm's Law
         # ====================
         self.model.cnst_ohm_pf_from = pyo.Constraint(self.model.E, rule=cnst_ohm_pf_from_exp)
         self.model.cnst_ohm_pf_to   = pyo.Constraint(self.model.E, rule=cnst_ohm_pf_to_exp)
@@ -123,17 +113,16 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.cnst_ohm_qf_to   = pyo.Constraint(self.model.E, rule=cnst_ohm_qf_to_exp)
 
         # ====================
-        # III.e Power Balance
+        # III.d Power Balance
         # ====================
         self.model.sets_balance = pyo.BuildAction(rule=define_sets_balance_exp)
         self.model.cnst_p_balance = pyo.Constraint(self.model.B, rule=cnst_p_balance_exp)
         self.model.cnst_q_balance = pyo.Constraint(self.model.B, rule=cnst_q_balance_exp)
 
         # ====================
-        # III.f Voltage Angle Difference
+        # III.e Voltage Angle Difference
         # ====================
-        self.model.cnst_dva_lower = pyo.Constraint(self.model.E, rule=cnst_dva_lower_exp)
-        self.model.cnst_dva_upper = pyo.Constraint(self.model.E, rule=cnst_dva_upper_exp)
+        self.model.cnst_dva = pyo.Constraint(self.model.E, rule=cnst_dva_exp)
 
         # ====================
         # IIII.   Objective
@@ -143,7 +132,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         print('end', flush=True)
 
 
-    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
+    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
         print('instantiate model...', end=' ', flush=True)
         
         gens = network['gen']
@@ -204,11 +193,13 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
 
         # Bus
         vmmax, vmmin = {}, {}
+        vm_init_val = {}
         slack = []
         for bus_id in busids:
             bus = buses[bus_id]
             vmmax[bus_id] = bus['vmax']
             vmmin[bus_id] = bus['vmin']
+            vm_init_val[bus_id] = max(bus['vmin'], 1.)
             bustype = bus['bus_type']
             if bustype == 3:
                 slack.append(bus_id)
@@ -255,7 +246,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         else:
             pg_init = pg
             qg_init = qg
-            vm_init = { id: 1. for id in busids }
+            vm_init = vm_init_val
             va_init = { id: 0. for id in busids }
             pf_from_init = { id: 0. for id in branchids }
             pf_to_init = { id: 0. for id in branchids }
@@ -304,7 +295,7 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.shunt_per_bus_raw = shunt_per_bus
         
         instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel), 
-        instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
+        self.append_suffix(instance)
         # note that self.model is not duplicated because it is desired to be AbstractModel 
         # for taking different types of problem instances consistently.
 

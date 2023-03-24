@@ -9,7 +9,7 @@ class ACOPFSolveTest(unittest.TestCase):
         model = opf.build_model('acopf')
         self.assertEqual(model.model_type, 'acopf')
         network = opf.parse_file(matpower_fn)
-        instance = model.instantiate_model(network)
+        instance = model.instantiate(network)
         solver = pyo.SolverFactory("ipopt")
         results = solver.solve(instance, tee=False)
 
@@ -46,14 +46,15 @@ class ACOPFSolveVariantTest(unittest.TestCase):
         model = opf.build_model('acopf')
         self.assertEqual(model.model_type, 'acopf')
         network = opf.parse_file(matpower_fn)
-        instance = model.instantiate_model(network)
+        instance = model.instantiate(network)
 
         # after instantiating, we can change some parameter values
         instance.pd[1] = 1. # it was originally 3.
 
         # then solve
         solver = pyo.SolverFactory("ipopt")
-        results = solver.solve(instance, tee=False)
+        # solver.options['linear_solver'] = 'ma27'
+        results = solver.solve(instance, tee=True)
         self.assertAlmostEqual(pyo.value(instance.obj_cost), 12250.188059667513) # cost is decreased to meet lower demand
         self.assertAlmostEqual(pyo.value(instance.pg[1]), 0.4000000096567134)
         self.assertAlmostEqual(pyo.value(instance.pg[2]), 1.7000000164781899)

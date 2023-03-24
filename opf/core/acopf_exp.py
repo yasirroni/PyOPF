@@ -1,23 +1,15 @@
 import pyomo.environ as pyo
 from pyomo.core.util import quicksum
+import math
 
-def cnst_pg_bound_min_exp(m, g):
-    return m.pgmin[g] - m.pg[g] <= 0. 
+def pg_bound_exp(m, g):
+    return (m.pgmin[g], m.pgmax[g])
 
-def cnst_pg_bound_max_exp(m, g):
-    return m.pg[g] - m.pgmax[g] <= 0. 
+def qg_bound_exp(m, g):
+    return (m.qgmin[g], m.qgmax[g])
 
-def cnst_qg_bound_min_exp(m, g):
-    return m.qgmin[g] - m.qg[g] <= 0. 
-
-def cnst_qg_bound_max_exp(m, g):
-    return m.qg[g] - m.qgmax[g] <= 0. 
-
-def cnst_vm_bound_min_exp(m, b):
-    return m.vmmin[b] - m.vm[b] <= 0. 
-
-def cnst_vm_bound_max_exp(m, b):
-    return m.vm[b] - m.vmmax[b] <= 0. 
+def vm_bound_exp(m, b):
+    return (m.vmmin[b], m.vmmax[b])
 
 def cnst_slack_va_exp(m, s):
     return m.va[s] == 0.
@@ -89,12 +81,8 @@ def cnst_q_balance_exp(m, b):
             - quicksum(m.qf_from[e] for e in m.branch_out_per_bus[b])\
             + quicksum(m.bs[s] for s in m.shunt_per_bus[b]) * m.vm[b]**2\
             == 0.
-            
-def cnst_dva_lower_exp(m, e):
-    return m.dvamin[e] - (m.va[m.bus_from[e]] - m.va[m.bus_to[e]]) <= 0.
-
-def cnst_dva_upper_exp(m, e):
-    return m.va[m.bus_from[e]] - m.va[m.bus_to[e]] - m.dvamax[e] <= 0.
-
+def cnst_dva_exp(m, e):
+    return (m.dvamin[e], m.va[m.bus_from[e]] - m.va[m.bus_to[e]], m.dvamax[e])
+    
 def obj_cost_exp(m, g):
     return quicksum(m.pg[g]*m.pg[g]*m.cost[g,0] + m.pg[g]*m.cost[g,1] + m.cost[g,2] for g in m.G)

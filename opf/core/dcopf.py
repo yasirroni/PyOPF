@@ -5,6 +5,7 @@ import math
 
 from .base import AbstractPowerBaseModel
 from .dcopf_exp import *
+from .acopf_exp import pg_bound_exp, obj_cost_exp
 
 
 class AbstractDCOPFModel(AbstractPowerBaseModel):
@@ -49,39 +50,31 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         # # ====================
         # # II.    Variables
         # # ====================
-        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, within=pyo.Reals) # active generation (injection), continuous
+        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=pg_bound_exp, within=pyo.Reals) # active generation (injection), continuous
         self.model.va = pyo.Var(self.model.B, initialize=self.model.va_init, within=pyo.Reals) # voltage angle, continuous
-        self.model.pf = pyo.Var(self.model.E, initialize=self.model.pf_init, within=pyo.Reals) # active flow (at each branch)
+        self.model.pf = pyo.Var(self.model.E, initialize=self.model.pf_init, bounds=pf_bound_exp, within=pyo.Reals) # active flow (at each branch)
 
         # ====================
         # III.   Constraints
         # ====================
 
         # ====================
-        # III.a     Bounds
-        # ====================
-        self.model.cnst_pg_bound_min = pyo.Constraint(self.model.G, rule=cnst_pg_bound_min_exp)
-        self.model.cnst_pg_bound_max = pyo.Constraint(self.model.G, rule=cnst_pg_bound_max_exp)
-        self.model.cnst_pf_bound_min = pyo.Constraint(self.model.E, rule=cnst_pf_bound_min_exp)
-        self.model.cnst_pf_bound_max = pyo.Constraint(self.model.E, rule=cnst_pf_bound_max_exp)
-
-        # ====================
-        # III.b Voltage Angle at Slack Bus
+        # III.a Voltage Angle at Slack Bus
         # ====================
         self.model.cnst_slack_va = pyo.Constraint(self.model.slack, rule=cnst_slack_va_exp)
 
         # ====================
-        # III.c Setup Sets for defining the following constraints
+        # III.b Setup Sets for defining the following constraints
         # ====================
         self.model.sets_balance = pyo.BuildAction(rule=define_sets_balance_exp)
 
         # ====================
-        # III.d Define Flow
+        # III.c Define Flow
         # ====================
         self.model.cnst_pf = pyo.Constraint(self.model.E, rule=cnst_pf_exp)
 
         # ====================
-        # III.e Power Balance
+        # III.d Power Balance
         # ====================
         self.model.cnst_power_bal = pyo.Constraint(self.model.B, rule=cnst_power_bal_exp)
 
@@ -92,7 +85,7 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         print('end', flush=True)
 
 
-    def instantiate_model(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
+    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
         print('instantiate model...', end=' ', flush=True)
         gens = network['gen']
         buses = network['bus']
@@ -203,7 +196,7 @@ class AbstractDCOPFModel(AbstractPowerBaseModel):
         self.model.bus_per_branch_raw = bus_per_branch
 
         instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel)
-        instance.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT_EXPORT) # define the dual assess point
+        self.append_suffix(instance)
         print('end', flush=True)
         return instance
 
