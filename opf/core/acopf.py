@@ -3,12 +3,12 @@ import pyomo.environ as pyo
 import numpy as np
 import math
 
-from .base import AbstractPowerBaseModel
+from .base import NormalOPFModel
 from .acopf_exp import *
 
 
-class AbstractACOPFModel(AbstractPowerBaseModel):
-    """ Abstract AC-OPF optimization model class.  
+class ACOPFModel(NormalOPFModel):
+    """ AC-OPF optimization model class.  
     """
     def __init__(self, model_type):
         super().__init__(model_type)
@@ -17,7 +17,6 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         """ Define the (abstract) AC-OPF optimization model. 
             This is enabled without having the specific parameter values.
         """
-        print('build model...', end=' ', flush=True)
         
         self.model.B = pyo.Set() # bus indices
         self.model.G = pyo.Set() # generator indices
@@ -75,7 +74,6 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.g = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
         self.model.b = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
 
-
         # # ====================
         # # II.    Variables
         # # ====================
@@ -129,12 +127,10 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         # ====================
         self.model.obj_cost = pyo.Objective(sense=pyo.minimize, rule=obj_cost_exp)
 
-        print('end', flush=True)
 
-
-    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
-        print('instantiate model...', end=' ', flush=True)
-        
+    def _instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
+        """ create ConcreteModel
+        """
         gens = network['gen']
         buses = network['bus']
         branches = network['branch']
@@ -295,9 +291,10 @@ class AbstractACOPFModel(AbstractPowerBaseModel):
         self.model.shunt_per_bus_raw = shunt_per_bus
         
         instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel), 
-        self.append_suffix(instance)
         # note that self.model is not duplicated because it is desired to be AbstractModel 
         # for taking different types of problem instances consistently.
 
-        print('end', flush=True)
         return instance
+
+    
+    
