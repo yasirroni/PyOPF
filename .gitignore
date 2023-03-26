@@ -262,3 +262,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+release.sh
+release_test.sh

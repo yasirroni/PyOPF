@@ -10,15 +10,11 @@ import opf
 # The directory containing this file
 HERE = path.abspath(path.dirname(__file__))
 
-# Get the long description from the README file
-# with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
-#     long_description = f.read()
-
 EMOJIES = [':zap:', ':o:', ':x:']
 
 def load_description(path_dir=HERE, filename='README.md'):
     with open(path.join(HERE, filename), 'r', encoding='utf-8') as f:
-        desc = f.read().split()
+        desc = f.read().split(' ')
         return ' '.join([d for d in desc if d not in EMOJIES])
 
 def load_requirements(path_dir=HERE, filename='requirements.txt', comment_char='#'):
@@ -64,6 +60,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Operating System :: OS Independent"
@@ -74,5 +71,5 @@ setup(
     project_urls={
         'Github': 'https://github.com/seonho-park/PyOPF'
     },
-    python_requires='>=3.9'
+    python_requires='>=3.8'
 )
