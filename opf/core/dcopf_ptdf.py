@@ -3,13 +3,13 @@ import pyomo.environ as pyo
 import numpy as np
 import math
 
-from .base import PowerBaseModel
+from .base import NormalOPFModel
 from .dcopf_exp import cnst_power_bal_ptdf_exp, cnst_pf_ptdf_exp
 from .acopf_exp import pg_bound_exp, obj_cost_exp
 from .utils import compute_ptdf
 
 
-class DCOPFModelPTDF(PowerBaseModel):
+class DCOPFModelPTDF(NormalOPFModel):
     """ Abstract DC-OPF using PTDF (power transfer distribution factor) optimization model class.  
     """
     def __init__(self, model_type):
@@ -19,7 +19,6 @@ class DCOPFModelPTDF(PowerBaseModel):
         """ Define the (abstract) DC-OPF optimization model. 
             This is enabled without having the specific parameter values.
         """
-        print('build model...', end=' ', flush=True)
         self.model.B = pyo.Set() # bus indices
         self.model.G = pyo.Set() # generator indices
         self.model.E = pyo.Set() # branch indices
@@ -63,11 +62,9 @@ class DCOPFModelPTDF(PowerBaseModel):
         # IIII.   Objective
         # ====================
         self.model.obj_cost = pyo.Objective(sense=pyo.minimize, rule=obj_cost_exp)
-        print('end', flush=True)
 
 
-    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
-        print('instantiate model...', end=' ', flush=True)
+    def _instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel:
         gens = network['gen']
         buses = network['bus']
         branches = network['branch']
@@ -155,7 +152,5 @@ class DCOPFModelPTDF(PowerBaseModel):
         }
         
         instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel)
-        self.append_suffix(instance)
-
-        print('end', flush=True)
+        
         return instance

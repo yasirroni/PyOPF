@@ -4,9 +4,9 @@
 
 
 # :zap: PyOPF: Optimal Power Flow Modeling in Python
-Python based optimal power flow modeling framework. This modeling is basically based on [Pyomo](https://github.com/Pyomo/pyomo).
-Pyomo is a solver-agnostic optimization modeling package in Python. 
-This repo utilizes Pyomo for modeling various optimal power flow formulations in power system applications.
+`PyOPF` is Optimal Power Flow (OPF) modeling framework in Python. 
+This modeling is basically based on [`Pyomo`](https://github.com/Pyomo/pyomo), which is a solver-agnostic optimization modeling package in Python. 
+`PyOPF` generally can take [PGLib](https://github.com/power-grid-lib/pglib-opf) based input and formulate various OPF problems including AC-OPF, DC-OPF.
 
 
 ## Installation
@@ -49,9 +49,9 @@ pip install opf
     -  To be added
 
 ## Warmstarting
-* **PyOPF** supports primal and dual warmstarting. Documentation is to be added.
+* **PyOPF** fully supports primal and dual warmstarting. Documentation is to be added.
     ```python
-    opf.setup_warmstart(instance, warmstart_dict) 
+    model.setup_warmstart(warmstart_solution_dict) 
     ```
 
 
@@ -73,22 +73,16 @@ pip install opf
     network = opf.parse_file("./data/pglib_opf_case5_pjm.m")
 
     # create the concrete model
-    instance = model.instantiate(network)
-
-    # define the optimization solver
-    solver = SolverFactory("ipopt")
+    model.instantiate(network)
 
     # solve the problem
-    results = solver.solve(instance, options={'print_level' : 5, 'linear_solver': 'ma27'}, tee=True)
+    result = model.solve(solver_option={'print_level' : 5, 'linear_solver': 'ma27'}, tee=True)
 
     # check the optimal objective value
-    print('obj value', value(instance.obj_cost))
+    print('obj value', result['obj_cost'])
 
-    # check the optimal solution
-    for v in instance.component_objects(Var, active=True):
-        print("Variable",v)  
-        for index in v:
-            print ("   ",index, value(v[index]))  
+    # check the (primal) optimal solution
+    print('primal solution', result['sol']['primal'])
     ```
 
 
