@@ -3,12 +3,12 @@ import pyomo.environ as pyo
 import numpy as np
 import math
 
-from .base import AbstractPowerBaseModel
+from .base import PowerBaseModel
 from .dcopf_exp import *
 from .acopf_exp import pg_bound_exp, obj_cost_exp
 
 
-class AbstractDCOPFModel(AbstractPowerBaseModel):
+class DCOPFModel(PowerBaseModel):
     """ Abstract DC-OPF optimization model class.  
     """
     def __init__(self, model_type):

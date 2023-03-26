@@ -3,13 +3,13 @@ import pyomo.environ as pyo
 import numpy as np
 import math
 
-from .base import AbstractPowerBaseModel
+from .base import PowerBaseModel
 from .dcopf_exp import cnst_power_bal_ptdf_exp, cnst_pf_ptdf_exp
 from .acopf_exp import pg_bound_exp, obj_cost_exp
 from .utils import compute_ptdf
 
 
-class AbstractDCOPFModelPTDF(AbstractPowerBaseModel):
+class DCOPFModelPTDF(PowerBaseModel):
     """ Abstract DC-OPF using PTDF (power transfer distribution factor) optimization model class.  
     """
     def __init__(self, model_type):

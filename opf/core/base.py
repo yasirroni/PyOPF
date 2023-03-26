@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 
 
-class AbstractPowerBaseModel(ABC):
+class PowerBaseModel(ABC):
     """ abstract class for defining the problem.
         Should inherit this when adding the power model.
     """

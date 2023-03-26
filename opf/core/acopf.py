@@ -3,12 +3,12 @@ import pyomo.environ as pyo
 import numpy as np
 import math
 
-from .base import AbstractPowerBaseModel
+from .base import PowerBaseModel
 from .acopf_exp import *
 
 
-class AbstractACOPFModel(AbstractPowerBaseModel):
-    """ Abstract AC-OPF optimization model class.  
+class ACOPFModel(PowerBaseModel):
+    """ AC-OPF optimization model class.  
     """
     def __init__(self, model_type):
         super().__init__(model_type)
