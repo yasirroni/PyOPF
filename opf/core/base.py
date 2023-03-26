@@ -12,7 +12,9 @@ class PowerBaseModel(ABC):
         self.model = pyo.AbstractModel()
         self.instance = None
 
-    def is_constructed(self):
+    def is_constructed(self) -> bool:
+        """ whether to have ConcreteModel
+        """
         if isinstance(self.instance,pyo.ConcreteModel):
             return True
         else:
