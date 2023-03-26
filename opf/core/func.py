@@ -5,10 +5,13 @@ from .base import AbstractPowerBaseModel
 
 
 def build_model(model_type:str) -> AbstractPowerBaseModel:
-    """_summary_
+    """ build optimal power flow model
 
     Args:
-        model_type (str): acopf: AC-OPF
+        model_type (str): optimal power flow model type 
+                          acopf:      AC-OPF, 
+                          dcopf:      DC-OPF, 
+                          dcopf-ptdf: DC-OPF based on PTDF matrix
 
     Returns:
         AbstractPowerBaseModel: abstract power model
