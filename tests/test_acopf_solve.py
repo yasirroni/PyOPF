@@ -44,6 +44,7 @@ class ACOPFSolveVariantTest(unittest.TestCase):
     def test_parse(self):
         matpower_fn = Path("./data/pglib_opf_case5_pjm.m")
         model = opf.build_model('acopf')
+        self.assertEqual(model.is_constructed(),False)
         self.assertEqual(model.model_type, 'acopf')
         network = opf.parse_file(matpower_fn)
         instance = model.instantiate(network)

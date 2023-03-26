@@ -10,6 +10,13 @@ class PowerBaseModel(ABC):
     def __init__(self, model_type:str):
         self.model_type = model_type
         self.model = pyo.AbstractModel()
+        self.instance = None
+
+    def is_constructed(self):
+        if isinstance(self.instance,pyo.ConcreteModel):
+            return True
+        else:
+            return False
 
     @abstractmethod
     def _build_model(self) -> None: pass
