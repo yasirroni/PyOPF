@@ -6,7 +6,7 @@ import math
 from .base import NormalOPFModel
 from .dcopf_exp import cnst_power_bal_ptdf_exp, cnst_pf_ptdf_exp
 from .acopf_exp import pg_bound_exp, obj_cost_exp
-from .utils import compute_ptdf
+from .ptdf import compute_ptdf
 
 
 class DCOPFModelPTDF(NormalOPFModel):

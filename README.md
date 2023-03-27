@@ -32,7 +32,7 @@ pip install opf
     - **PyOPF** takes the the input files in PGLib, which is basically based on MATPOWER format.
     - Uses various solvers that are supported in Pyomo including IPOPT to solve the problem instance.
 
-2. :o:DC-OPF (DC Optimal Power Flow)
+2. :o: DC-OPF (DC Optimal Power Flow)
     ```python
     model = opf.build_model('dcopf')      # base DC-OPF model
     model = opf.build_model('dcopf-ptdf') # DC-OPF model using PTDF
@@ -42,10 +42,10 @@ pip install opf
     - Only use active power generations and bus voltage angles (for base DC-OPF) as variables.
     - Like AC-OPF, PGLib m-files can be taken as input.
 
-3. :x:SC-DC-OPF (Security Constrained DC Optimal Power Flow)
+3. :x: SC-DC-OPF (Security Constrained DC Optimal Power Flow)
     -  To be added
 
-4. :x:SC-AC-OPF (Security Constrained AC Optimal Power Flow)
+4. :x: SC-AC-OPF (Security Constrained AC Optimal Power Flow)
     -  To be added
 
 ## Warmstarting
