@@ -10,7 +10,7 @@ from .ptdf import compute_ptdf
 
 
 class DCOPFModelPTDF(NormalOPFModel):
-    """ Abstract DC-OPF using PTDF (power transfer distribution factor) optimization model class.  
+    """ DC-OPF using PTDF (power transfer distribution factor) optimization model class.  
     """
     def __init__(self, model_type):
         super().__init__(model_type)
