@@ -1,17 +1,19 @@
+from .base import OPFBaseModel
 from .acopf import ACOPFModel
 from .dcopf import DCOPFModel
 from .dcopf_ptdf import DCOPFModelPTDF
-from .base import OPFBaseModel
-
+from .scdcopf import SCDCOPFModel
 
 def build_model(model_type:str) -> OPFBaseModel:
     """ build optimal power flow model
 
     Args:
         model_type (str): optimal power flow model type 
-                          acopf:      AC-OPF, 
-                          dcopf:      DC-OPF, 
-                          dcopf-ptdf: DC-OPF based on PTDF matrix
+                          acopf:        AC-OPF
+                          dcopf:        DC-OPF 
+                          dcopf-ptdf:   DC-OPF based on PTDF matrix
+                          scdcopf:      SC-DC-OPF (extensive formulation)
+                          scdcopf-ccga: SC-DC-OPF based on CCGA    
 
     Returns:
         OPFBaseModel: abstract power model
@@ -24,6 +26,8 @@ def build_model(model_type:str) -> OPFBaseModel:
         model = DCOPFModel(model_type)
     elif model_type == 'dcopf-ptdf':
         model = DCOPFModelPTDF(model_type) 
+    elif model_type == 'scdcopf':
+        model = SCDCOPFModel(model_type)
     else:
         assert False
 

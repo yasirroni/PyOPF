@@ -159,3 +159,10 @@ class NormalOPFModel(OPFBaseModel):
                             self.instance.ipopt_zU_in.set_value(v[i], bound_ws_dict[str(v)]["ub_"+str(i)])
 
         return None
+
+
+class SCOPFModel(OPFBaseModel):
+    """Security Constrained Optimal Power Flow base class
+    """
+    def __init__(self, model_type:bool):
+        super().__init__(model_type)
