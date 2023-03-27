@@ -9,7 +9,7 @@ from .acopf_exp import pg_bound_exp, obj_cost_exp
 
 
 class DCOPFModel(NormalOPFModel):
-    """ Abstract DC-OPF optimization model class.  
+    """ DC-OPF optimization model class.  
     """
     def __init__(self, model_type):
         super().__init__(model_type)
