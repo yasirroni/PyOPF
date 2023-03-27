@@ -30,7 +30,6 @@ class DCOPFModelPTDF(NormalOPFModel):
         # # I.    Parameters
         # # ====================
         self.model.pg_init = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
-        self.model.pf_init = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
         self.model.pgmin = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.pgmax = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.pd = pyo.Param(self.model.L, within=pyo.Reals, mutable=True)
@@ -118,10 +117,8 @@ class DCOPFModelPTDF(NormalOPFModel):
         
         if init_var is not None:
             pg_init = init_var['pg']
-            pf_init = init_var['pf']
         else:
             pg_init = pg
-            pf_init = { id: 0. for id in branchids }
 
         ptdf_g_raw, ptdf_l_raw = compute_ptdf(network)
 
@@ -141,7 +138,6 @@ class DCOPFModelPTDF(NormalOPFModel):
             'L': {None: loadids},
             'slack': {None: slack},
             'pg_init': pg_init,
-            'pf_init': pf_init,
             'ncost': {None: np.arange(ncost)},
             'pd': pd,
             'pgmax': pgmax,
