@@ -8,11 +8,9 @@ import numpy as np
 class LODFTest(unittest.TestCase):
     def test_ptdf_case5(self):
         matpower_fn = Path("./data/pglib_opf_case5_pjm.m")
-        # matpower_fn = Path("./data/pglib_opf_case5_pjm_tree.m")
         network = opf.parse_file(matpower_fn)
         outage_branchidxs = [0,1,2]
         lodf = opf.compute_lodf(network,outage_branchidxs)
-        # print(lodf)
         lodf_gt = [[-1.         ,  0.34479465,  0.30707071],
                    [ 0.54285714 , -1.,          0.69292929],
                    [ 0.45714286 ,  0.65520535, -1.        ],
