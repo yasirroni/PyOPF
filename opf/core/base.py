@@ -1,6 +1,6 @@
 import pyomo.environ as pyo
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, List
 import warnings
 
 
@@ -25,9 +25,6 @@ class OPFBaseModel(ABC):
     def _build_model(self) -> None: pass
 
     @abstractmethod
-    def _instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel: pass
-
-    @abstractmethod
     def _solve(self, optimizer:pyo.SolverFactory, solve_method:bool = None, tee:bool = False, extract_dual:bool = False) -> Dict[str,Any]: pass
 
     @abstractmethod
@@ -48,15 +45,8 @@ class OPFBaseModel(ABC):
         
         return self._solve(optimizer, solve_method, tee, extract_dual)
 
-
-    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> None: 
-        print('instantiate model...', end=' ', flush=True)
-        if isinstance(self.instance,pyo.ConcreteModel):
-            warnings.warn("instance is already created. instantiating again will destroy the previous instance", RuntimeWarning)
-
-        self.instance = self._instantiate(network, init_var, verbose)
-        self.append_suffix(self.instance)
-        print('end', flush=True)
+    @abstractmethod
+    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> None: pass
 
 
     def append_suffix(self, instance:pyo.ConcreteModel) -> None:
@@ -80,6 +70,9 @@ class NormalOPFModel(OPFBaseModel):
     """
     def __init__(self, model_type:bool):
         super().__init__(model_type)
+
+    @abstractmethod
+    def _instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel: pass
 
     def _solve(self, optimizer:pyo.SolverFactory, solve_method:bool = None, tee:bool = False, extract_dual:bool = False) -> Dict[str,Any]:
         opt_results = optimizer.solve(self.instance, tee=tee)
@@ -161,8 +154,69 @@ class NormalOPFModel(OPFBaseModel):
         return None
 
 
+    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> None: 
+        print('instantiate model...', end=' ', flush=True)
+        if isinstance(self.instance,pyo.ConcreteModel):
+            warnings.warn("instance is already created. instantiating again will destroy the previous instance", RuntimeWarning)
+
+        self.instance = self._instantiate(network, init_var, verbose)
+        self.append_suffix(self.instance)
+        print('end', flush=True)
+
+
 class SCOPFModel(OPFBaseModel):
     """Security Constrained Optimal Power Flow base class
     """
     def __init__(self, model_type:bool):
         super().__init__(model_type)
+
+    @abstractmethod
+    def _instantiate(self, network:Dict[str,Any], 
+                          init_var:Dict[str,Any] = None, 
+                          generator_contingency:List[str] = 'all',
+                          line_contingency:List[str] = 'all',
+                          verbose:bool = False,
+                          **kwargs) -> pyo.ConcreteModel: pass
+
+
+    def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> None: 
+        return self.instantiate(network=network, init_var=init_var, generator_contingency='all', line_contingency='all', verbose=verbose)
+
+
+    def instantiate(self, network:Dict[str,Any], 
+                          init_var:Dict[str,Any] = None, 
+                          generator_contingency:Union[str,List[str]] = 'all',
+                          line_contingency:Union[str,List[str]] = 'all',
+                          verbose:bool = False, **kwargs) -> None:
+        print('instantiate model...', end=' ', flush=True)
+        if isinstance(self.instance,pyo.ConcreteModel):
+            warnings.warn("instance is already created. instantiating again will destroy the previous instance", RuntimeWarning)
+
+        if isinstance(generator_contingency,str):
+            if generator_contingency.lower() != 'all':
+                raise RuntimeError("The argument 'generator_contingency' should be 'all' or specifies the generator ID list")
+            generator_contingency = list(sorted(network['gen'].keys()))
+        elif isinstance(generator_contingency,list):
+            # check sanity
+            for genid in generator_contingency:
+                if not genid in network['gen']:
+                    raise RuntimeError(f"Generator ID {genid} in the argument 'generator_contingency' is not placed in the given network.")
+        else:
+            raise RuntimeError("The argument 'generator_contingency' should be 'all' or specifies the generator ID list")
+
+    
+        if isinstance(line_contingency,str):
+            if line_contingency.lower() != 'all':
+                raise RuntimeError("The argument 'line_contingency' should be 'all' or specify the transmission ID list")
+            line_contingency = list(sorted(network['branch'].keys()))
+        elif isinstance(line_contingency,list):
+            # check sanity
+            for lineid in line_contingency:
+                if not lineid in network['branch']:
+                    raise RuntimeError(f"Branch ID {lineid} in the argument 'line_contingency' is not placed in the given network.")
+        else:
+            raise RuntimeError("The argument 'line_contingency' should be 'all' or specify the transmission ID list")
+
+        self.instance = self._instantiate(network, init_var, generator_contingency, line_contingency, verbose, **kwargs)
+        self.append_suffix(self.instance)
+        print('end', flush=True)

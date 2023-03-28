@@ -49,7 +49,6 @@ class DCOPFModelPTDF(NormalOPFModel):
         # ====================
         # III.a Power Flow
         # ====================
-        # self.model.cnst_pg_bound = pyo.Constraint(self.model.G, rule=cnst_pg_bound_exp)
         self.model.cnst_pf_ptdf = pyo.Constraint(self.model.E, rule=cnst_pf_ptdf_exp)
 
         # ====================
