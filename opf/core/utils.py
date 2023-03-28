@@ -108,18 +108,7 @@ def compute_load_incidence_matrix(network):
     return csc_array((data,(row,col)), shape=(B,L))
 
 
-def compute_reactance_vec(network):
-    branches = network['branch']
-    branchids_all = sorted(list(branches.keys()))
-    branchids = [branch_id for branch_id in branchids_all if branches[branch_id]['br_status']>0] # factor out not working branches
-    reactances = np.zeros(len(branchids))
-    for bi, branch_id in enumerate(branchids):
-        branch = branches[branch_id]
-        reactances[branch['index']] = branch['br_x']
-    return reactances
-
-
-def compute_line2bus_incidence_matrix(network):
+def compute_line_incidence_matrix(network):
     branches = network['branch']
     branchids_all = sorted(list(branches.keys()))
     branchids = [branch_id for branch_id in branchids_all if branches[branch_id]['br_status']>0] # factor out not working branches
@@ -136,7 +125,7 @@ def compute_line2bus_incidence_matrix(network):
         t_bus_id = branch['t_bus']
         f_bus_idx = buses[f_bus_id]['index']
         t_bus_idx = buses[t_bus_id]['index']
-        row.append(branch_idx); col.append(f_bus_idx); data.append(1.)
-        row.append(branch_idx); col.append(t_bus_idx); data.append(-1.)
+        row.append(f_bus_idx); col.append(branch_idx); data.append(1.)
+        row.append(t_bus_idx); col.append(branch_idx); data.append(-1.)
 
-    return csc_array((data, (row,col)), shape=(E,B))
+    return csc_array((data, (row,col)), shape=(B,E))
