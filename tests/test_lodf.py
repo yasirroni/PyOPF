@@ -56,9 +56,16 @@ class LODFTest(unittest.TestCase):
         result = model.solve(tee=False)
         pf = result['sol']['primal']['pf']
         pg = result['sol']['primal']['pg']
-        pf_vec = np.asarray([pfval for pfid, pfval in pf.items()])
-        pg_vec = np.asarray([pgval for pgid, pgval in pg.items()])
-        pd_vec = np.asarray([model.instance.pd[pdid].value for pdid in model.instance.pd])
+        pf_vec = np.empty(len(pf))
+        pg_vec = np.empty(len(pg))
+        pd_vec = np.empty(len(network['load']))
+        for genid, gen in network['gen'].items():
+            pg_vec[gen['index']] = pg[genid]
+        for branchid, branch in network['branch'].items():
+            pf_vec[branch['index']] = pf[branchid]
+        for loadid, load in network['load'].items():
+            pd_vec[load['index']] = model.instance.pd[loadid].value
+            
         pf_ke = pf_vec + lodf[:,0] * pf_vec[outage_branchidxs[0]]
         I_g = opf.compute_generator_incidence_matrix(network)
         I_l = opf.compute_load_incidence_matrix(network)
