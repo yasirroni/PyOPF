@@ -41,7 +41,7 @@ class ACOPFSolveVariantTest(unittest.TestCase):
         model.instantiate(network)
 
         # after instantiating, we can change some parameter values
-        model.instance.pd[1] = 1. # it was originally 3.
+        model.instance.pd['1'] = 1. # it was originally 3.
 
         # then solve
         result = model.solve('ipopt', tee=True)

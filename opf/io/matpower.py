@@ -19,7 +19,7 @@ MP_BUS_COLUMNS = [
 ]
 
 MP_GEN_COLUMNS = [
-    ("gen_bus", int),
+    ("gen_bus", str),
     ("pg", float), ("qg", float),
     ("qmax", float), ("qmin", float),
     ("vg", float),
@@ -40,8 +40,8 @@ MP_GEN_COLUMNS = [
 ]
 
 MP_BRANCH_COLUMNS = [
-    ("f_bus", int),
-    ("t_bus", int),
+    ("f_bus", str),
+    ("t_bus", str),
     ("br_r", float), ("br_x", float),
     ("br_b", float),
     ("rate_a", float),
@@ -269,7 +269,7 @@ def _split_loads_shunts(data):
             data['load'].append({
                 'pd':        bus['pd'],
                 'qd':        bus['qd'],
-                'load_bus':  bus['bus_i'],
+                'load_bus':  str(bus['bus_i']),
                 'status':    int(bus['bus_type']!=4),
                 'index':     load_idx,
                 'id':        load_idx+1,
@@ -306,7 +306,7 @@ def _list2dict(data):
             # entries_dict[idx] = entry
             id = entry.get('id', i)
             assert id not in entries_dict
-            entries_dict[id] = entry
+            entries_dict[str(id)] = entry
         data[k] = entries_dict # convert list to dict
 
 

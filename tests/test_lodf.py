@@ -9,38 +9,68 @@ class LODFTest(unittest.TestCase):
     def test_ptdf_case5(self):
         matpower_fn = Path("./data/pglib_opf_case5_pjm.m")
         network = opf.parse_file(matpower_fn)
-        lodf = opf.compute_lodf(network,[2,1,0])
-        lodf_true = [[-0.01830456,  0.00622698, -0.40352259],
-                     [-0.04130568, -1.0317937,  -0.10798492],
-                     [-0.47283073,  0.01183299, -0.09093467],
-                     [-0.01830456,  0.00622698,  0.19891959],
-                     [-0.01830456, -1.06426794,  0.19891959],
-                     [-0.05961024,  1.05866194,  0.09093467]]
-        np.testing.assert_almost_equal(lodf, lodf_true)
-    
-    def test_ptdf_case14(self):
-        matpower_fn = Path('./data/pglib_opf_case14_ieee.m')
-        network = opf.parse_file(matpower_fn)
-        lodf = opf.compute_lodf(network,[2,10,5])
-        lodf_true = [[ 6.20460730e-02, -6.35515996e-03,  5.56406710e-02],
-                     [-5.93230863e-02,  6.07625406e-03, -5.31987952e-02],
-                     [-3.78835360e-01, -5.05390637e-03,  2.48695298e-01],
-                     [-1.31601853e-01, -1.10276914e-02, -1.18015775e-01],
-                     [-9.72089218e-02,  9.95676627e-03, -8.71734402e-02],
-                     [ 3.02835745e-01, -5.51880199e-03, -4.09534875e-01],
-                     [ 1.49640261e-01,  8.72877005e-02,  1.34191966e-01],
-                     [ 4.98931706e-03, -5.97586923e-02,  4.47423883e-03],
-                     [ 2.86281555e-03, -3.42888840e-02,  2.56726930e-03],
-                     [-7.85213260e-03,  9.40475763e-02, -7.04150812e-03],
-                     [-5.90434950e-03, -4.70791927e-01, -5.29480678e-03],
-                     [-6.65348604e-04, -1.13193757e-02, -5.96660530e-04],
-                     [-3.14915319e-03, -5.35755963e-02, -2.82404652e-03],
-                     [ 1.22344466e-17,  1.04232718e-17,  1.16297895e-17],
-                     [ 4.98931706e-03, -5.97586923e-02,  4.47423883e-03],
-                     [ 5.48933880e-03, -1.66504024e-01,  4.92264021e-03],
-                     [ 3.71693946e-03,  6.32351733e-02,  3.33321668e-03],
-                     [ 5.68538516e-03, -1.72450552e-01,  5.09844749e-03],
-                     [-1.20090734e-03, -2.04306755e-02, -1.07693021e-03],
-                     [-3.77848944e-03, -6.42823046e-02, -3.38841247e-03]]
-        np.testing.assert_almost_equal(lodf, lodf_true)
+        outage_branchidxs = [0,1,2]
+        lodf = opf.compute_lodf(network,outage_branchidxs)
+        lodf_gt = [[-1.         ,  0.34479465,  0.30707071],
+                   [ 0.54285714 , -1.,          0.69292929],
+                   [ 0.45714286 ,  0.65520535, -1.        ],
+                   [-1.         ,  0.34479465,  0.30707071],
+                   [-1.         ,  0.34479465,  0.30707071],
+                   [-0.45714286 , -0.65520535,  1.        ]]
+        np.testing.assert_almost_equal(lodf, lodf_gt)
         
+
+    def test_ptdf_case5_solve(self):
+        matpower_fn = Path("./data/pglib_opf_case5_pjm.m")
+        model = opf.build_model('dcopf')
+
+        network = opf.parse_file(matpower_fn)
+        outage_branchidxs = [2,0]
+        lodf = opf.compute_lodf(network,outage_branchidxs)
+
+        model.instantiate(network)
+        result = model.solve(tee=False)
+        pf = result['sol']['primal']['pf']
+        pg = result['sol']['primal']['pg']
+        pf_vec = np.asarray([pfval for pfid, pfval in pf.items()])
+        pg_vec = np.asarray([pgval for pgid, pgval in pg.items()])
+        pd_vec = np.asarray([model.instance.pd[pdid].value for pdid in model.instance.pd])
+        pf_ke = pf_vec + lodf[:,0] * pf_vec[outage_branchidxs[0]]
+        I_g = opf.compute_generator_incidence_matrix(network)
+        I_l = opf.compute_load_incidence_matrix(network)
+        I_e = opf.compute_line_incidence_matrix(network)
+        p_bal = I_e @ pf_vec - I_g @ pg_vec + I_l @ pd_vec
+        p_bal_ke = I_e @ pf_ke - I_g @ pg_vec + I_l @ pd_vec
+        np.testing.assert_almost_equal(p_bal, np.zeros_like(p_bal))
+        np.testing.assert_almost_equal(p_bal_ke, np.zeros_like(p_bal_ke))
+
+    def test_ptdf_case14_solve(self):
+        matpower_fn = Path("./data/pglib_opf_case14_ieee.m")
+        model = opf.build_model('dcopf')
+
+        network = opf.parse_file(matpower_fn)
+        outage_branchidxs = [0]
+        lodf = opf.compute_lodf(network,outage_branchidxs)
+
+        model.instantiate(network)
+        result = model.solve(tee=False)
+        pf = result['sol']['primal']['pf']
+        pg = result['sol']['primal']['pg']
+        pf_vec = np.empty(len(pf))
+        pg_vec = np.empty(len(pg))
+        pd_vec = np.empty(len(network['load']))
+        for genid, gen in network['gen'].items():
+            pg_vec[gen['index']] = pg[genid]
+        for branchid, branch in network['branch'].items():
+            pf_vec[branch['index']] = pf[branchid]
+        for loadid, load in network['load'].items():
+            pd_vec[load['index']] = model.instance.pd[loadid].value
+            
+        pf_ke = pf_vec + lodf[:,0] * pf_vec[outage_branchidxs[0]]
+        I_g = opf.compute_generator_incidence_matrix(network)
+        I_l = opf.compute_load_incidence_matrix(network)
+        I_e = opf.compute_line_incidence_matrix(network)
+        p_bal = I_e @ pf_vec - I_g @ pg_vec + I_l @ pd_vec
+        p_bal_ke = I_e @ pf_ke - I_g @ pg_vec + I_l @ pd_vec
+        np.testing.assert_almost_equal(p_bal, np.zeros_like(p_bal))
+        np.testing.assert_almost_equal(p_bal_ke, np.zeros_like(p_bal_ke))
