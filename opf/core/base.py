@@ -25,12 +25,19 @@ class OPFBaseModel(ABC):
     def _build_model(self) -> None: pass
 
     @abstractmethod
-    def _solve(self, optimizer:pyo.SolverFactory, solve_method:bool = None, tee:bool = False, extract_dual:bool = False) -> Dict[str,Any]: pass
+    def _solve(self, optimizer:pyo.SolverFactory, 
+                     solve_method:bool = None, 
+                     tee:bool = False, 
+                     extract_dual:bool = False,
+                     extract_contingency:bool = False) -> Dict[str,Any]: pass
 
-    @abstractmethod
-    def _write_output(self, results:Dict[str,Any], extract_dual:bool = False) -> None: pass
 
-    def solve(self, solver:Union[bool,pyo.SolverFactory] = 'ipopt', solver_option:Dict[str,Any] = {}, solve_method:bool = None, tee:bool = False, extract_dual:bool = False) -> Dict[str,Any]: 
+    def solve(self, solver:Union[bool,pyo.SolverFactory] = 'ipopt', 
+                    solver_option:Dict[str,Any] = {}, 
+                    solve_method:bool = None, 
+                    tee:bool = False, 
+                    extract_dual:bool = False, 
+                    extract_contingency:bool = False) -> Dict[str,Any]: 
         if not isinstance(self.instance,pyo.ConcreteModel):
             raise RuntimeError("instance has not included in the model class. Please execute model.instantiate(network) first to create it.")
         if isinstance(solver, str):
@@ -43,7 +50,7 @@ class OPFBaseModel(ABC):
         for k,v in solver_option.items():
             optimizer.options[k] = v
         
-        return self._solve(optimizer, solve_method, tee, extract_dual)
+        return self._solve(optimizer, solve_method, tee, extract_dual, extract_contingency)
 
     @abstractmethod
     def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> None: pass
@@ -74,7 +81,11 @@ class NormalOPFModel(OPFBaseModel):
     @abstractmethod
     def _instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> pyo.ConcreteModel: pass
 
-    def _solve(self, optimizer:pyo.SolverFactory, solve_method:bool = None, tee:bool = False, extract_dual:bool = False) -> Dict[str,Any]:
+    def _solve(self, optimizer:pyo.SolverFactory, 
+                     solve_method:bool = None, 
+                     tee:bool = False, 
+                     extract_dual:bool = False,
+                     extract_contingency:bool = False) -> Dict[str,Any]:
         opt_results = optimizer.solve(self.instance, tee=tee)
 
         results = {'termination_status': opt_results.solver.termination_condition, 
@@ -84,11 +95,11 @@ class NormalOPFModel(OPFBaseModel):
                    }
 
         if results['termination_status'] in ['optimal', 'locallyOptimal', 'globallyOptimal']:
-            self._write_output(results, extract_dual)
+            self._write_output(results, extract_dual, extract_contingency)
         
         return results
         
-    def _write_output(self, results:Dict[str,Any], extract_dual:bool = False) -> None:
+    def _write_output(self, results:Dict[str,Any], extract_dual:bool = False, extract_contingency:bool = False) -> None:
         # extract primal solutions
         primal_sol = {}
         for v in self.instance.component_objects(pyo.Var, active=True):
@@ -152,7 +163,6 @@ class NormalOPFModel(OPFBaseModel):
                             self.instance.ipopt_zU_in.set_value(v[i], bound_ws_dict[str(v)]["ub_"+str(i)])
 
         return None
-
 
     def instantiate(self, network:Dict[str,Any], init_var:Dict[str,Any] = None, verbose:bool = False) -> None: 
         print('instantiate model...', end=' ', flush=True)
@@ -218,5 +228,5 @@ class SCOPFModel(OPFBaseModel):
             raise RuntimeError("The argument 'line_contingency' should be 'all' or specify the transmission ID list")
 
         self.instance = self._instantiate(network, init_var, generator_contingency, line_contingency, verbose, **kwargs)
-        self.append_suffix(self.instance)
+        # self.append_suffix(self.instance) # extracting dual or warmstarting dual is not supported
         print('end', flush=True)

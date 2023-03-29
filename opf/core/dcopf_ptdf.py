@@ -1,7 +1,6 @@
 from typing import Any, Dict
 import pyomo.environ as pyo
 import numpy as np
-import math
 
 from .base import NormalOPFModel
 from .dcopf_exp import cnst_power_bal_ptdf_exp, cnst_pf_ptdf_exp
