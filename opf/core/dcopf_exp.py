@@ -45,4 +45,4 @@ def cnst_power_bal_ptdf_exp(m):
 
 def cnst_pf_ptdf_exp(m, e):
     m.gen_injection = LinearExpression(constant=0, linear_coefs=m.ptdf_g[e], linear_vars=[m.pg[g] for g in m.G])
-    return (-m.rate_a[e], m.load_injection[e] - m.gen_injection, m.rate_a[e])
+    return (-m.rate_a[e], m.gen_injection - m.load_injection[e], m.rate_a[e])

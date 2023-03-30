@@ -21,13 +21,10 @@ def parse_file(f:FILE_LIKE) -> None:
         with open(f, 'r') as opened_f:
             return _parse_file(opened_f)
 
-        # opened_f = open(f, 'r')
     except (io.UnsupportedOperation, AttributeError) as e:
         msg = (str(e) + ". The file {} is not supported for parsing"%str(f))
         raise type(e)(msg)
     
-    # return _parse_file(opened_f)
-
 
 def _parse_file(f):
     lines = f.readlines()
@@ -37,6 +34,7 @@ def _parse_file(f):
     make_per_unit(data_dict)
     # correct_cost_functions(data)
     # simplify_cost_terms(data_dict)
+    data_dict['preprocessed'] = False
     return data_dict
 
 

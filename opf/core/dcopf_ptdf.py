@@ -70,11 +70,9 @@ class DCOPFModelPTDF(NormalOPFModel):
         busids = sorted(list(buses.keys())) # sort this for consistency between the pyomo vector and the input matpower 
         loadids = sorted(list(loads.keys()))
 
-        branchids_all = sorted(list(branches.keys()))
-        branchids = [branch_id for branch_id in branchids_all if branches[branch_id]['br_status']>0] # factor out not working branches
-        genids_all = sorted(list(gens.keys())) 
-        genids = [gen_id for gen_id in genids_all if gens[gen_id]['gen_status']>0] # factor out not working generators
-
+        branchids = sorted(list(branches.keys()))
+        genids = sorted(list(gens.keys())) 
+        genidxs = [gens[genid]['index'] for genid in genids]
         ncost = 3 # all PGLib input files have three cost coefficients
 
         # Generator
@@ -91,11 +89,11 @@ class DCOPFModelPTDF(NormalOPFModel):
 
         # Load 
         pd = {}
-        pdvec = []
+        pdvec = np.empty((len(loadids)))
         for load_id in loadids:
             load = loads[load_id]
             pd[load_id] = load['pd']
-            pdvec.append(load['pd'])
+            pdvec[load['index']] = load['pd']
         pdvec = np.asarray(pdvec)
 
         # Bus
@@ -122,12 +120,13 @@ class DCOPFModelPTDF(NormalOPFModel):
 
         load_injection_raw = ptdf_l_raw @ pdvec
         load_injection = {}
-        for i, branch_id in enumerate(branchids):
-            load_injection[branch_id] = load_injection_raw[i]
+        for branch_id in branchids:
+            load_injection[branch_id] = load_injection_raw[branches[branch_id]['index']]
 
         self.model.ptdf_g = {}
-        for i, branchid in enumerate(branchids):
-            self.model.ptdf_g[branchid] = ptdf_g_raw[i,:].tolist()
+        
+        for branch_id in branchids:
+            self.model.ptdf_g[branch_id] = ptdf_g_raw[branches[branch_id]['index'],genidxs].tolist()
 
         data = {
             'G': {None: genids},

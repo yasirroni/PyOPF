@@ -113,7 +113,7 @@ def _extract_mp_data(lines:List[str], lineidx:int, column_info:List[Tuple[str,..
     entries = []
     idx = lineidx+1 
     
-    entry_idx = 0
+    entry_id = 1
     while True:
         line = lines[idx]
         if ']' in line: break
@@ -125,14 +125,10 @@ def _extract_mp_data(lines:List[str], lineidx:int, column_info:List[Tuple[str,..
         
         if entry_type == 'bus':
             entry['id'] = int(row_data[0])
-            entry['index'] = entry_idx
-            # entry['source_id'] = ['bus', entry['index']]
         else:
-            entry['id'] = entry_idx+1
-            entry['index'] = entry_idx
-            # entry['source_id'] = [entry_type, entry_idx]
+            entry['id'] = entry_id
         entries.append(entry)
-        entry_idx += 1
+        entry_id += 1
         idx += 1
 
     return entries, idx+1
@@ -142,7 +138,7 @@ def _extract_mp_gencost_data(lines:List[str], lineidx:int) -> List[Any]:
     entries = []
     idx = lineidx+1
 
-    entry_idx = 0
+    entry_id = 1
     while True:
         line = lines[idx]
         if ']' in line: break
@@ -157,8 +153,7 @@ def _extract_mp_gencost_data(lines:List[str], lineidx:int) -> List[Any]:
         ncost = int(row_data[3])
         costs = [float(row_data[4+c]) for c in range(ncost)]
         entry = {
-            'id': entry_idx+1,
-            'index': entry_idx,
+            'id': entry_id,
             # 'source_id': ["gencost", entry_idx],
             'model': model,
             'startup': startup,
@@ -166,7 +161,7 @@ def _extract_mp_gencost_data(lines:List[str], lineidx:int) -> List[Any]:
             'cost': costs
         }
         entries.append(entry)
-        entry_idx += 1
+        entry_id += 1
         idx += 1
 
     return entries, idx+1
@@ -262,7 +257,7 @@ def _merge_cost_data(data):
 def _split_loads_shunts(data):
     data['load'], data['shunt'] = [], []
 
-    load_idx, shunt_idx = 0, 0
+    load_id, shunt_id = 1, 1
 
     for i,bus in enumerate(data['bus']):
         if bus['pd'] != 0. or bus['qd'] != 0.: # load
@@ -271,11 +266,9 @@ def _split_loads_shunts(data):
                 'qd':        bus['qd'],
                 'load_bus':  str(bus['bus_i']),
                 'status':    int(bus['bus_type']!=4),
-                'index':     load_idx,
-                'id':        load_idx+1,
-                # 'source_id': ['bus', bus['bus_i']]
+                'id':        load_id,
             })
-            load_idx += 1
+            load_id += 1
         
         if bus['gs'] != 0. or bus['bs'] != 0.: #shunt
             data['shunt'].append({
@@ -283,11 +276,9 @@ def _split_loads_shunts(data):
                 'bs': bus['bs'],
                 'shunt_bus': bus['bus_i'],
                 'status': int(bus['bus_type']!=4),
-                'index': shunt_idx,
-                'id':    shunt_idx+1
-                # 'source_id': ['bus', bus['bus_i']]
+                'id':    shunt_id
             })
-            shunt_idx += 1
+            shunt_id += 1
 
         for k in ["pd", "qd", "gs", "bs"]:
             del bus[k]

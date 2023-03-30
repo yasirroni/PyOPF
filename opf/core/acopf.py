@@ -141,11 +141,9 @@ class ACOPFModel(NormalOPFModel):
         loadids = sorted(list(loads.keys()))
         shuntids = sorted(list(shunts.keys()))
 
-        branchids_all = sorted(list(branches.keys()))
-        branchids = [branch_id for branch_id in branchids_all if branches[branch_id]['br_status']>0] # factor out not working branches
-        genids_all = sorted(list(gens.keys())) 
-        genids = [gen_id for gen_id in genids_all if gens[gen_id]['gen_status']>0] # factor out not working generators
-
+        branchids = sorted(list(branches.keys()))
+        genids = sorted(list(gens.keys())) 
+        
         ncost = 3 # all PGLib input files have three cost coefficients
         
         gen_per_bus = { busid: [] for busid in busids }

@@ -10,11 +10,11 @@ def pg_ke_bound_exp(m, g, k):
 
 def cnst_pf_repr_exp(m, e):
     m.gen_injection = LinearExpression(constant=0, linear_coefs=m.ptdf_g[e], linear_vars=[m.pg[g] for g in m.G])
-    return m.pf[e] == m.load_injection[e] - m.gen_injection
+    return m.pf[e] == m.gen_injection - m.load_injection[e]
 
 def cnst_pf_kg_exp(m, e, k):
     m.gen_injection = LinearExpression(constant=0, linear_coefs=m.ptdf_g[e], linear_vars=[m.pg_kg[g,k] for g in m.G])
-    return (-m.rate_a[e], m.load_injection[e] - m.gen_injection, m.rate_a[e])
+    return (-m.rate_a[e], m.gen_injection - m.load_injection[e], m.rate_a[e])
 
 def cnst_pf_ke_exp(m, e, k):
     return (-m.rate_a[e], m.pf[e] + m.lodf[e,k]*m.pf[k], m.rate_a[e])
