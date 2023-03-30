@@ -41,13 +41,13 @@ class OPFBaseModel(ABC):
                     extract_dual:bool = False, 
                     extract_contingency:bool = False) -> Dict[str,Any]: 
         if not isinstance(self.instance,pyo.ConcreteModel):
-            raise RuntimeError("instance has not included in the model class. Please execute model.instantiate(network) first to create it.")
+            raise RuntimeError("instance has not included in the model class. Please execute `model.instantiate(network)` first to create it.")
         if isinstance(solver, str):
             optimizer = pyo.SolverFactory(solver.lower())
         elif isinstance(solver, type(pyo.SolverFactory)):
             optimizer = solver
         else:
-            raise RuntimeError("solver should be string (such as ipopt or gurobi) or pyo.SolverFactory object.")
+            raise RuntimeError("solver should be string (such as ipopt or gurobi) or `pyo.SolverFactory` object.")
 
         for k,v in solver_option.items():
             optimizer.options[k] = v
