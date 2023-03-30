@@ -42,8 +42,10 @@ class SCDCOPFModel(SCOPFModel):
         self.model.pg_init = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.pgmin = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.pgmax = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
+        self.model.pgcapa = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
         self.model.pd = pyo.Param(self.model.L, within=pyo.Reals, mutable=True)
         self.model.rate_a = pyo.Param(self.model.E, within=pyo.NonNegativeReals, mutable=True)
+        self.model.rate_c = pyo.Param(self.model.E, within=pyo.NonNegativeReals, mutable=True)
         self.model.cost = pyo.Param(self.model.G, self.model.ncost, within=pyo.Reals, mutable=True)
         self.model.load_injection = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
         self.model.gamma = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
@@ -80,14 +82,13 @@ class SCDCOPFModel(SCOPFModel):
         # ====================
         # III.c Power Balance
         # ====================
-        self.model.cnst_power_bal = pyo.Constraint(rule=cnst_power_bal_ptdf_exp) # base case...
-        self.model.cnst_power_bal_kg = pyo.Constraint(self.model.K_g, rule=cnst_power_bal_ptdf_kg_exp)
-        self.model.cnst_power_bal_ke = pyo.Constraint(self.model.K_e, rule=cnst_power_bal_ptdf_ke_exp)
+        self.model.cnst_power_bal = pyo.Constraint(rule=cnst_power_bal_ptdf_exp) # base case
+        self.model.cnst_power_bal_kg = pyo.Constraint(self.model.K_g, rule=cnst_power_bal_ptdf_kg_exp) # generator contingency
+        self.model.cnst_power_bal_ke = pyo.Constraint(self.model.K_e, rule=cnst_power_bal_ptdf_ke_exp) # line contingency
 
         # ====================
         # III.c Primary Response for Generator Contingency
         # ====================
-        self.model.cnst_pg_kg = pyo.Constraint(self.model.K_g, rule=cnst_pg_kg_exp) 
         self.model.cnst_pr_kg1 = pyo.Constraint(self.model.G, self.model.K_g, rule=cnst_pr_kg1_exp)
         self.model.cnst_pr_kg2 = pyo.Constraint(self.model.G, self.model.K_g, rule=cnst_pr_kg2_exp)
 
@@ -129,15 +130,17 @@ class SCDCOPFModel(SCOPFModel):
         if isinstance(gamma, float):
             gamma = {genid:gamma for genid in genids}
         self.model.eps = kwargs.get('eps', 1e-4) # Page 14 in the paper 'Solving realistic security-constrained optimal power flow problems'
+        rate_c_increase_rate = kwargs.get('rate_c_increase_rate', 0.33)
 
         ncost = 3 # all PGLib input files have three cost coefficients
 
         # Generator
-        pgmax, pgmin, pg, qg, cost = {}, {}, {}, {}, {}
+        pgmax, pgmin, pgcapa, pg, qg, cost = {}, {}, {}, {}, {}, {}
         for gen_id in genids:
             gen = gens[gen_id]
             pgmax[gen_id] = gen['pmax']
             pgmin[gen_id] = gen['pmin']
+            pgcapa[gen_id] = max(0., gen['pmax'] - gen['pmin'])
             pg[gen_id] = gen['pg']
             qg[gen_id] = gen['qg']
             cost_raw = gen['cost']
@@ -161,12 +164,17 @@ class SCDCOPFModel(SCOPFModel):
 
         # Branch
         rate_a = {}
+        rate_c = {}
         ang2pf = {}
         for branch_id in branchids:
             branch = branches[branch_id]
             rate_a_val = branch['rate_a']
-            if rate_a_val == 0.: rate_a_val + 1e12
+            rate_c_val = branch['rate_c']
+            if np.isclose(rate_a_val,0.): rate_a_val = 1e12
             rate_a[branch_id] = rate_a_val
+            if np.isclose(rate_c_val,0.): rate_c_val = 1e12
+            if np.isclose(rate_c_val,rate_a_val): rate_c_val = (1.+rate_c_increase_rate)*rate_a_val
+            rate_c[branch_id] = rate_c_val
         
         if init_var is not None:
             pg_init = init_var['pg']
@@ -195,7 +203,11 @@ class SCDCOPFModel(SCOPFModel):
                 i = branches[e]['index']
                 for j, k in enumerate(line_contingency):
                     self.model.lodf[e,k] = lodf_raw[i,j] 
-                
+        
+        # check generator contingencies
+        # if generation capacity is zero, no need to consider the generator contingency for this generator
+        generator_contingency = [genid for genid in generator_contingency if not np.isclose(pgcapa[genid],0.)]
+
         data = {
             'G': {None: genids},
             'B': {None: busids},
@@ -207,8 +219,10 @@ class SCDCOPFModel(SCOPFModel):
             'pd': pd,
             'pgmax': pgmax,
             'pgmin': pgmin,
+            'pgcapa': pgcapa,
             'cost': cost,
             'rate_a': rate_a,
+            'rate_c': rate_c,
             'load_injection': load_injection,
             'gamma': gamma,
             'K_g': generator_contingency,
