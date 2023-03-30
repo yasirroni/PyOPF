@@ -53,8 +53,7 @@ def compute_lodf(network:Dict[str,Any], branch_outage_idxs:List[int]) ->  np.nda
     return LODF
 
 def check_line_contingency(network:Dict[str,Any], line_contingency:List[str]) ->  List[str]:
-    """ check if line contingency is a bridge
-    
+    """ check if line contingency induces network isolation.
     """
     buses = network['bus']
     busids = sorted(list(buses.keys()))
@@ -68,9 +67,8 @@ def check_line_contingency(network:Dict[str,Any], line_contingency:List[str]) ->
     branchids = np.asarray([branch_id for branch_id in branchids_all if branches[branch_id]['br_status']>0]) # factor out not working branches
     E = branchids.size
 
-    branch_outage_idxs = [branches[branchid]['index'] for branchid in line_contingency]
-    noutage = len(branch_outage_idxs)
-    branch_O = np.asarray(branch_outage_idxs)
+    branch_O = np.asarray([branches[branchid]['index'] for branchid in line_contingency])
+    noutage = len(line_contingency)
 
     S_b = compute_bus_susceptance_matrix(network, slack) # BxB
     S_br = compute_branch_susceptance_matrix(network)
@@ -79,15 +77,15 @@ def check_line_contingency(network:Dict[str,Any], line_contingency:List[str]) ->
     S_inv_PHI = spsolve(S_b,PHI)
 
     S_inv_PHI[slack, :] = 0
-    PTDF = S_br @ S_inv_PHI # ExE branch-to-branch PTDF
+    PTDF = S_br @ S_inv_PHI # branch-to-branch PTDF, ExE 
 
     PTDF_MO = PTDF[:,branch_O]
     PTDF_OO = PTDF_MO[branch_O, np.arange(noutage)]
     line_contingency_out = []
-    for branchid, branchidx, PTDF_val in zip(branchids, branch_O, PTDF_OO):
+    for line_cont_, branchidx, PTDF_val in zip(line_contingency, branch_O, PTDF_OO):
         if np.isclose(PTDF_val, 1.):
-            warnings.warn(f"Line contingency ID {branchid} is excluded because it is a bridge.")
+            warnings.warn(f"Line contingency ID {line_cont_} is excluded because it causes network isolation.")
         else:
-            line_contingency_out.append(branchid)
+            line_contingency_out.append(line_cont_)
 
     return line_contingency_out
