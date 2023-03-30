@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Union, List
 import warnings
 
+from .utils import _preprocessing_network
+
 
 class OPFBaseModel(ABC):
     """ abstract class for defining the problem.
@@ -39,13 +41,13 @@ class OPFBaseModel(ABC):
                     extract_dual:bool = False, 
                     extract_contingency:bool = False) -> Dict[str,Any]: 
         if not isinstance(self.instance,pyo.ConcreteModel):
-            raise RuntimeError("instance has not included in the model class. Please execute model.instantiate(network) first to create it.")
+            raise RuntimeError("instance has not included in the model class. Please execute `model.instantiate(network)` first to create it.")
         if isinstance(solver, str):
             optimizer = pyo.SolverFactory(solver.lower())
         elif isinstance(solver, type(pyo.SolverFactory)):
             optimizer = solver
         else:
-            raise RuntimeError("solver should be string (such as ipopt or gurobi) or pyo.SolverFactory object.")
+            raise RuntimeError("solver should be string (such as ipopt or gurobi) or `pyo.SolverFactory` object.")
 
         for k,v in solver_option.items():
             optimizer.options[k] = v
@@ -169,6 +171,7 @@ class NormalOPFModel(OPFBaseModel):
         if isinstance(self.instance,pyo.ConcreteModel):
             warnings.warn("instance is already created. instantiating again will destroy the previous instance", RuntimeWarning)
 
+        _preprocessing_network(network)
         self.instance = self._instantiate(network, init_var, verbose)
         self.append_suffix(self.instance)
         print('end', flush=True)
@@ -183,8 +186,8 @@ class SCOPFModel(OPFBaseModel):
     @abstractmethod
     def _instantiate(self, network:Dict[str,Any], 
                           init_var:Dict[str,Any] = None, 
-                          generator_contingency:List[str] = 'all',
-                          line_contingency:List[str] = 'all',
+                          generator_contingency:List[str] = [],
+                          line_contingency:List[str] = [],
                           verbose:bool = False,
                           **kwargs) -> pyo.ConcreteModel: pass
 
@@ -202,10 +205,13 @@ class SCOPFModel(OPFBaseModel):
         if isinstance(self.instance,pyo.ConcreteModel):
             warnings.warn("instance is already created. instantiating again will destroy the previous instance", RuntimeWarning)
 
+        _preprocessing_network(network)
+
         if isinstance(generator_contingency,str):
             if generator_contingency.lower() != 'all':
                 raise RuntimeError("The argument 'generator_contingency' should be 'all' or specifies the generator ID list")
-            generator_contingency = list(sorted(network['gen'].keys()))
+            genids_all = sorted(list(network['gen'].keys())) 
+            generator_contingency = [gen_id for gen_id in genids_all if network['gen'][gen_id]['gen_status']>0] # factor out not working generators
         elif isinstance(generator_contingency,list):
             # check sanity
             for genid in generator_contingency:
@@ -218,7 +224,8 @@ class SCOPFModel(OPFBaseModel):
         if isinstance(line_contingency,str):
             if line_contingency.lower() != 'all':
                 raise RuntimeError("The argument 'line_contingency' should be 'all' or specify the transmission ID list")
-            line_contingency = list(sorted(network['branch'].keys()))
+            branchids_all = sorted(list(network['branch'].keys()))
+            line_contingency = [branch_id for branch_id in branchids_all if network['branch'][branch_id]['br_status']>0] # factor out not working branches
         elif isinstance(line_contingency,list):
             # check sanity
             for lineid in line_contingency:

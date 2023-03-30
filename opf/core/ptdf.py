@@ -5,10 +5,12 @@ from scipy.sparse.linalg import spsolve
 from .utils import (compute_branch_susceptance_matrix,
                     compute_bus_susceptance_matrix,
                     compute_generator_incidence_matrix,
-                    compute_load_incidence_matrix)
+                    compute_load_incidence_matrix,
+                    _preprocessing_network)
 
 
 def compute_ptdf(network:Dict[str,Any]) ->  Tuple[Dict[str,Any], Dict[str,Any]]:
+    _preprocessing_network(network)
     buses = network['bus']
     busids = sorted(list(buses.keys()))
     slack = [ buses[busid]['index'] for busid in busids if buses[busid]['bus_type'] == 3]

@@ -13,7 +13,7 @@ def compute_branch_susceptance_matrix(network):
     B = len(buses)
 
     row, col, data = [], [], []
-    for bi, branch_id in enumerate(branchids):
+    for branch_id in branchids:
         branch = branches[branch_id]
         branch_idx = branch['index']
         f_bus_id = branch['f_bus']
@@ -41,7 +41,7 @@ def compute_bus_susceptance_matrix(network, slack_idx):
     B = len(buses)
 
     row, col, data = [], [], []
-    for bi, branch_id in enumerate(branchids):
+    for branch_id in branchids:
         branch = branches[branch_id]
         f_bus_id = branch['f_bus']
         t_bus_id = branch['t_bus']
@@ -76,11 +76,11 @@ def compute_generator_incidence_matrix(network):
     B = len(buses)
 
     row, col = [], []
-    for i, genid in enumerate(genids):
+    for genid in genids:
         gen = gens[genid]
         gen_bus_id = gen['gen_bus']
         row.append(buses[gen_bus_id]['index'])
-        col.append(i)
+        col.append(gen['index'])
 
     row = np.asarray(row)
     col = np.asarray(col)
@@ -97,7 +97,7 @@ def compute_load_incidence_matrix(network):
     B = len(buses)
 
     row, col = [], []
-    for i, loadid in enumerate(loadids):
+    for loadid in loadids:
         busid = loads[loadid]['load_bus']
         row.append(buses[busid]['index'])
         col.append(loads[loadid]['index'])
@@ -118,7 +118,7 @@ def compute_line_incidence_matrix(network):
     B = len(buses)
 
     row, col, data = [], [], []
-    for bi, branch_id in enumerate(branchids):
+    for branch_id in branchids:
         branch = branches[branch_id]
         branch_idx = branch['index']
         f_bus_id = branch['f_bus']
@@ -129,3 +129,39 @@ def compute_line_incidence_matrix(network):
         row.append(t_bus_idx); col.append(branch_idx); data.append(-1.)
 
     return csc_array((data, (row,col)), shape=(B,E))
+
+
+def _preprocessing_network(network:Dict[str,Any]) -> None:
+    if network['preprocessed']: return
+    gens = network['gen']
+    branches = network['branch']
+    genids_all = sorted(list(gens.keys())) 
+    genids = [gen_id for gen_id in genids_all if gens[gen_id]['gen_status']>0] # factor out not working generators
+
+    branchids_all = sorted(list(branches.keys()))
+    branchids = [branch_id for branch_id in branchids_all if branches[branch_id]['br_status']>0] # factor out not working branches
+    
+    gens_new = {}
+    for genidx, genid in enumerate(genids):
+        gen = gens[genid]
+        gen['index'] = genidx
+        gens_new[genid] = gen
+    network['gen'] = gens_new # update
+
+    branches_new = {}
+    for branchidx, branchid in enumerate(branchids):
+        branch = branches[branchid]
+        branch['index'] = branchidx
+        branches_new[branchid] = branch
+    network['branch'] = branches_new # update
+    
+    for busidx, (busid, bus) in enumerate(network['bus'].items()):
+        bus['index'] = busidx
+    
+    for loadidx, (loadid, load) in enumerate(network['load'].items()):
+        load['index'] = loadidx
+    
+    for shuntidx, (shuntid, shunt) in enumerate(network['shunt'].items()):
+        shunt['index'] = shuntidx
+
+    network['preprocessed'] = True

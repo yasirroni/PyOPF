@@ -93,11 +93,11 @@ pip install opf
 @software{
     PyOPF_2023,
     author = {Park, Seonho},
-    doi = {10.5281/zenodo.7738744},
+    doi = {10.5281/zenodo.7772531},
     license = {MIT},
     month = {3},
     title = {{PyOPF: Optimal Power Flow Modeling in Python}},
-    version = {0.1.0},
+    version = {0.2.0},
     year = {2023}
 }
 ```
