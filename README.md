@@ -27,10 +27,10 @@ pip install opf
     ```python
     model = opf.build_model('acopf')
     ```
-    - AC-OPF with a polar bus voltage variables.
+    - AC-OPF with a polar bus voltage variable representations.
     - The detailed formulation can be found in [PGLib](https://github.com/power-grid-lib/pglib-opf).
-    - **PyOPF** takes the the input files in PGLib, which is basically based on MATPOWER format.
-    - Uses various solvers that are supported in Pyomo including IPOPT to solve the problem instance.
+    - `PyOPF` takes the the input files from PGLib, which is basically based on MATPOWER format.
+    - Uses various solvers supported in Pyomo including IPOPT and Gurobi to solve problem instances.
 
 2. :o: DC-OPF (DC Optimal Power Flow)
     ```python
@@ -49,7 +49,7 @@ pip install opf
     -  To be added
 
 ## Warmstarting
-* **PyOPF** fully supports primal and dual warmstarting. Documentation is to be added.
+* `PyOPF` fully supports primal and dual warmstarting for IPOPT. Documentation is to be added.
     ```python
     model.setup_warmstart(warmstart_solution_dict) 
     ```
@@ -62,17 +62,17 @@ pip install opf
     conda install -c conda-forge ipopt
     ```
 
-- Running the following example AC-OPF problem
+- Running the following AC-OPF problem
     ```python
     import opf
 
     # build abstract model for AC-OPF
     model = opf.build_model('acopf')
 
-    # load pglib based model file
+    # load pglib input model file
     network = opf.parse_file("./data/pglib_opf_case5_pjm.m")
 
-    # create the concrete model
+    # create the model instance (concrete model)
     model.instantiate(network)
 
     # solve the problem

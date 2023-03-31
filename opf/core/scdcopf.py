@@ -55,12 +55,9 @@ class SCDCOPFModel(SCOPFModel):
         # # ====================
         self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=pg_bound_exp, within=pyo.Reals) # active generation (injection), continuous
         self.model.pg_kg = pyo.Var(self.model.G, self.model.K_g, bounds = pg_kg_bound_exp, within=pyo.Reals) # active generation when generator contingency occurs
-        self.model.pg_ke = pyo.Var(self.model.G, self.model.K_e, bounds = pg_ke_bound_exp, within=pyo.Reals) # active generation when line contingency occurs
-        self.model.n_kg = pyo.Var(self.model.K_g, bounds = (0.,1.), within=pyo.Reals) # global extent of generation increase when generator contingency occurs
-        self.model.n_ke = pyo.Var(self.model.K_e, bounds = (0.,1.), within=pyo.Reals) # global extent of generation increase when line contingency occurs
-        
+
+        self.model.n_kg = pyo.Var(self.model.K_g, bounds = (0.,1.), within=pyo.Reals) # global extent of generation increase when generator contingency occurs        
         self.model.rho_kg = pyo.Var(self.model.G, self.model.K_g, bounds = (0.,None), within=pyo.Reals) # downward deviation of pg from linear response
-        self.model.rho_ke = pyo.Var(self.model.G, self.model.K_e, bounds = (0.,None), within=pyo.Reals) # downward deviation of pg from linear response
         
         self.model.pf = pyo.Var(self.model.E, bounds=pf_bound_exp, within=pyo.Reals) # power flow for base case # it is neccesary to define power flow for line contingency
 
@@ -76,27 +73,20 @@ class SCDCOPFModel(SCOPFModel):
         # ====================
         # III.b Power Flow Contingency
         # ====================
-        self.model.cnst_pf_kg = pyo.Constraint(self.model.E, self.model.K_g, rule=cnst_pf_kg_exp) # generator contingency
-        self.model.cnst_pf_ke = pyo.Constraint(self.model.E, self.model.K_e, rule=cnst_pf_ke_exp) # line contingency
+        self.model.cnst_pf_kg = pyo.Constraint(self.model.E, self.model.K_g, rule=cnst_pf_kg_exp) # generator contingency -- based on PTDF and primary response
+        self.model.cnst_pf_ke = pyo.Constraint(self.model.E, self.model.K_e, rule=cnst_pf_ke_exp) # line contingency -- based on LODF
 
         # ====================
         # III.c Power Balance
         # ====================
         self.model.cnst_power_bal = pyo.Constraint(rule=cnst_power_bal_ptdf_exp) # base case
         self.model.cnst_power_bal_kg = pyo.Constraint(self.model.K_g, rule=cnst_power_bal_ptdf_kg_exp) # generator contingency
-        self.model.cnst_power_bal_ke = pyo.Constraint(self.model.K_e, rule=cnst_power_bal_ptdf_ke_exp) # line contingency
-
+        
         # ====================
         # III.c Primary Response for Generator Contingency
         # ====================
         self.model.cnst_pr_kg1 = pyo.Constraint(self.model.G, self.model.K_g, rule=cnst_pr_kg1_exp)
         self.model.cnst_pr_kg2 = pyo.Constraint(self.model.G, self.model.K_g, rule=cnst_pr_kg2_exp)
-
-        # ====================
-        # III.d Primary Response for Line Contingency
-        # ====================
-        self.model.cnst_pr_ke1 = pyo.Constraint(self.model.G, self.model.K_e, rule=cnst_pr_ke1_exp)
-        self.model.cnst_pr_ke2 = pyo.Constraint(self.model.G, self.model.K_e, rule=cnst_pr_ke2_exp)
 
         # ====================
         # IIII.   Objective
@@ -259,7 +249,6 @@ class SCDCOPFModel(SCOPFModel):
 
         if extract_contingency:
             pg_kg_sol = {}
-
             for g in self.instance.G:
                 for k in self.instance.K_g:
                     key = f"{g},{k}"
