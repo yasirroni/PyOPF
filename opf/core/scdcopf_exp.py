@@ -8,8 +8,8 @@ def pg_kg_bound_exp(m, g, k):
     else:
         return (m.pgmin[g], m.pgmax[g])
 
-def pg_ke_bound_exp(m, g, k):
-    return (m.pgmin[g], m.pgmax[g])
+# def pg_ke_bound_exp(m, g, k):
+#     return (m.pgmin[g], m.pgmax[g])
 
 def cnst_pf_repr_exp(m, e):
     m.gen_injection = LinearExpression(constant=0, linear_coefs=m.ptdf_g[e], linear_vars=[m.pg[g] for g in m.G])
@@ -49,8 +49,8 @@ def cnst_pr_ke2_exp(m, g, k):
 def cnst_power_bal_ptdf_kg_exp(m, k):
     return quicksum(m.pd[l] for l in m.L) == quicksum(m.pg_kg[g,k] for g in m.G)
 
-def cnst_power_bal_ptdf_ke_exp(m, k):
-    return quicksum(m.pd[l] for l in m.L) == quicksum(m.pg_ke[g,k] for g in m.G)
+# def cnst_power_bal_ptdf_ke_exp(m, k):
+#     return quicksum(m.pd[l] for l in m.L) == quicksum(m.pg_ke[g,k] for g in m.G)
 
 
 
@@ -65,3 +65,6 @@ def cnst_pf_kg_lazy_exp(m, e_k):
 def cnst_pf_ke_lazy_exp(m, e_k):
     e,k = e_k
     return (-m.rate_c[e], m.pf[e] + m.lodf[e,k]*m.pf[k], m.rate_c[e])
+
+def cnst_provisional_kg_exp(m, g, k): # Eq. (36) in the SCDCOPF-CCGA paper # to ensure solution is obtainable through binary search
+    return m.pg_kg[g,k] - m.pg[g] <= m.r_bar[g]

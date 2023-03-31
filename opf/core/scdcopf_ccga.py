@@ -33,8 +33,10 @@ class SCDCOPFModelCCGA(SCOPFModel):
         self.model.L = pyo.Set() # load indices
         self.model.slack = pyo.Set() # the slack buses
         self.model.ncost = pyo.Set() # the number of costs
-        self.model.K_g = pyo.Set() # generator indices for generator contingency in consideration
-        # self.model.K_e = pyo.Set() # branch (line) indices for line contingency in consideration
+        self.model.K_g = pyo.Set() # whole generator indices for generator contingency 
+        self.model.K_g_lazy = pyo.Set() # selected generator indices for generator contingency in consideration # used for defining complementarity constraints (primary response)
+
+        # these two sets below are for flow limit constraints, which will be added lazily.
         self.model.E_K_g = pyo.Set(dimen=2) # to check flow limit for generator contingency in consideration
         self.model.E_K_e = pyo.Set(dimen=2) # to check flow limit for line contingency in consideration
         
@@ -51,18 +53,16 @@ class SCDCOPFModelCCGA(SCOPFModel):
         self.model.cost = pyo.Param(self.model.G, self.model.ncost, within=pyo.Reals, mutable=True)
         self.model.load_injection = pyo.Param(self.model.E, within=pyo.Reals, mutable=True)
         self.model.gamma = pyo.Param(self.model.G, within=pyo.Reals, mutable=True)
+        self.model.r_bar = pyo.Param(self.model.G, within=pyo.Reals, mutable=True) # primary response limit 
 
         # # ====================
         # # II.    Variables
         # # ====================
         self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=pg_bound_exp, within=pyo.Reals) # active generation (injection), continuous
-        self.model.pg_kg = pyo.Var(self.model.G, self.model.K_g, bounds = pg_kg_bound_exp, within=pyo.Reals) # active generation when generator contingency occurs
-        # self.model.pg_ke = pyo.Var(self.model.G, self.model.K_e, bounds = pg_ke_bound_exp, within=pyo.Reals) # active generation when line contingency occurs
-        self.model.n_kg = pyo.Var(self.model.K_g, bounds = (0.,1.), within=pyo.Reals) # global extent of generation increase when generator contingency occurs
-        # self.model.n_ke = pyo.Var(self.model.K_e, bounds = (0.,1.), within=pyo.Reals) # global extent of generation increase when line contingency occurs
+        self.model.pg_kg = pyo.Var(self.model.G, self.model.K_g, bounds = pg_kg_bound_exp, within=pyo.Reals) # (provisional) active generation when generator contingency occurs
         
-        self.model.rho_kg = pyo.Var(self.model.G, self.model.K_g, bounds = (0.,None), within=pyo.Reals) # downward deviation of pg from linear response
-        # self.model.rho_ke = pyo.Var(self.model.G, self.model.K_e, bounds = (0.,None), within=pyo.Reals) # downward deviation of pg from linear response
+        self.model.n_kg = pyo.Var(self.model.K_g_lazy, bounds = (0.,1.), within=pyo.Reals) # global extent of generation increase when generator contingency occurs
+        self.model.rho_kg = pyo.Var(self.model.G, self.model.K_g_lazy, bounds = (0.,None), within=pyo.Reals) # downward deviation of pg from linear response
         
         self.model.pf = pyo.Var(self.model.E, bounds=pf_bound_exp, within=pyo.Reals) # power flow for base case # it is neccesary to define power flow for line contingency
 
@@ -76,7 +76,7 @@ class SCDCOPFModelCCGA(SCOPFModel):
         self.model.cnst_pf = pyo.Constraint(self.model.E, rule=cnst_pf_repr_exp) # base case power flow # defined using PTDF
 
         # ====================
-        # III.b Power Flow Contingency
+        # III.b Power Flow Contingency (Lazy Constraints)
         # ====================
         self.model.cnst_pf_kg = pyo.Constraint(self.model.E_K_g, rule=cnst_pf_kg_lazy_exp) # generator contingency
         self.model.cnst_pf_ke = pyo.Constraint(self.model.E_K_e, rule=cnst_pf_ke_lazy_exp) # line contingency
@@ -86,19 +86,16 @@ class SCDCOPFModelCCGA(SCOPFModel):
         # ====================
         self.model.cnst_power_bal = pyo.Constraint(rule=cnst_power_bal_ptdf_exp) # base case
         self.model.cnst_power_bal_kg = pyo.Constraint(self.model.K_g, rule=cnst_power_bal_ptdf_kg_exp) # generator contingency
-        self.model.cnst_power_bal_ke = pyo.Constraint(self.model.K_e, rule=cnst_power_bal_ptdf_ke_exp) # line contingency
 
         # ====================
-        # III.c Primary Response for Generator Contingency
+        # III.d Provisional Post-Contingency Generation Limit
         # ====================
-        self.model.cnst_pr_kg1 = pyo.Constraint(self.model.G, self.model.K_g, rule=cnst_pr_kg1_exp)
-        self.model.cnst_pr_kg2 = pyo.Constraint(self.model.G, self.model.K_g, rule=cnst_pr_kg2_exp)
-
+        self.model.cnst_provisional_kg = pyo.Constraint(self.model.G, self.model.K_g, rule=cnst_provisional_kg_exp)
         # ====================
-        # III.d Primary Response for Line Contingency
+        # III.e Primary Response for Generator Contingency
         # ====================
-        self.model.cnst_pr_ke1 = pyo.Constraint(self.model.G, self.model.K_e, rule=cnst_pr_ke1_exp)
-        self.model.cnst_pr_ke2 = pyo.Constraint(self.model.G, self.model.K_e, rule=cnst_pr_ke2_exp)
+        self.model.cnst_pr_kg1 = pyo.Constraint(self.model.G, self.model.K_g_lazy, rule=cnst_pr_kg1_exp)
+        self.model.cnst_pr_kg2 = pyo.Constraint(self.model.G, self.model.K_g_lazy, rule=cnst_pr_kg2_exp)
 
         # ====================
         # IIII.   Objective
@@ -212,6 +209,9 @@ class SCDCOPFModelCCGA(SCOPFModel):
         # if generation capacity is zero, no need to consider the generator contingency for this generator
         self.generator_contingency = [genid for genid in generator_contingency if not np.isclose(pgcapa[genid],0.)]
 
+        r_bar = {g: gamma[g]*pgcapa[g] for g in genids}
+
+
         data = {
             'G': {None: genids},
             'B': {None: busids},
@@ -229,8 +229,9 @@ class SCDCOPFModelCCGA(SCOPFModel):
             'rate_c': rate_c,
             'load_injection': load_injection,
             'gamma': gamma,
-            # 'K_g': generator_contingency,
-            # 'K_e': line_contingency,
+            'K_g': self.generator_contingency,
+            'K_e': self.line_contingency,
+            'r_bar': r_bar
         }
 
         instance = self.model.create_instance({None: data}, report_timing=verbose) # create instance (ConcreteModel)
@@ -241,6 +242,7 @@ class SCDCOPFModelCCGA(SCOPFModel):
                      tee:bool = False, 
                      extract_dual:bool = False,
                      extract_contingency:bool = False) -> Dict[str,Any]:
+
         opt_results = optimizer.solve(self.instance, tee=tee) # initial solve
         
         self._binary_search()
@@ -282,7 +284,7 @@ class SCDCOPFModelCCGA(SCOPFModel):
         return None
 
     def _binary_search(self):
-        """ Binary search for retrieving post-contingency generation and some relavent
+        """ Binary search for retrieving generation post-contingency and some relavent
             Corresponding to Algorithm 1 in the paper 'An Exact and Scalable Problem Decomposition for
             Security-Constrained Optimal Power Flow'.
         """
@@ -300,61 +302,61 @@ class SCDCOPFModelCCGA(SCOPFModel):
         for genid in self.generator_contingency:
             print('contingency gen id', genid)
             gamma = self.instance.gamma[genid].value
-            n_value, pg_k = self._binary_search_contingency(pd, pg, pgmin, pgmax, pgcapa, gamma, genid2idx, kgid=genid)
+            n_value, pg_k = self._binary_search_contingency(pd, pg, pgmin, pgmax, pgcapa, gamma, genid2idx, kid=genid)
             print('n_value', n_value)
+            if n_value is None:
+                raise RuntimeError(f"Binary search for post-contingency generation for generator contingency {genid} is failed.")
             alpha_g_ = self._compute_maximum_violation_thermal_limit_g(pg_k, pg)
             alpha_g[genid] = alpha_g_
 
-        alpha_e = {}
-        for branchid in self.line_contingency:
-            gamma = self.instance.gamma[genid].value
-            n_value, pg_k = self._binary_search_contingency(pd, pg, pgmin, pgmax, pgcapa, gamma, genid2idx, keid=branchid)
-            # self._compute_maximum_violation_thermal_limit_e(alpha_e, pg_k)
+        # alpha_e = {}
+        # for branchid in self.line_contingency:
+        #     gamma = self.instance.gamma[genid].value
+        #     n_value, pg_k = self._binary_search_contingency(pd, pg, pgmin, pgmax, pgcapa, gamma, genid2idx, keid=branchid)
+        #     # self._compute_maximum_violation_thermal_limit_e(alpha_e, pg_k)
+        print('alpha_g!', alpha_g)
         exit()
 
-    def _binary_search_contingency(self, pd, pg, pgmin, pgmax, pgcapa, gamma, genid2idx, kgid=None, keid=None, tol=1e-4):
-        kg = True if kgid is not None else False    
-        if kg:
-            K = self.instance.K_g
-            kid = kgid
-            n_var = self.instance.n_kg
-        else:
-            K = self.instance.K_e
-            kid = keid
-            n_var = self.instance.n_ke
+    def _binary_search_contingency(self, pd, pg, pgmin, pgmax, pgcapa, gamma, genid2idx, kid, maxiter=100, tol=1e-5):
+        K = self.instance.K_g_lazy
+        n_var = self.instance.n_kg
 
         n_value = n_var[kid].value if kid in K else 0.5
+        n_low, n_upp = 0., 1.
 
         pd_sum = pd.sum()
-        # j = 0
-        # TODO: when it does not converge... stop--> infeasible
-        # while True: # binary search
-        for j in range(100):
+        print("###############################################################")
+        print(f"##################### KID:{kid} ##########################")
+        print("###############################################################")
+        print("pg", pg)
+
+        n_value_opt = None
+        for j in range(maxiter):
             pg_k = pg + n_value*gamma*pgcapa
             pg_k = np.where(pg_k>pgmax, pgmax, pg_k)
-            pg_k[genid2idx[kid]] = 0. # contingency for generation?
-            print('pgk', pg_k)
+            pg_k[genid2idx[kid]] = 0. # contingency for generation
             e = pg_k.sum() - pd_sum
+            print(j, n_value, e)
             if np.abs(e) < tol:
-                print("converged", e,)
+                n_value_opt = n_value
                 break
             elif e>0:
-                n_value = max(0., 0.5*n_value)
+                n_upp = n_value
             else:
-                n_value = min(1., 1.5*n_value)
-            # j += 1
-            print(j, n_value, np.abs(e))
-
-        return n_value, pg_k
+                n_low = n_value
+            n_value = (n_low+n_upp)/2.
+            j += 1
+        return n_value_opt, pg_k
 
 
 
             
     def _compute_maximum_violation_thermal_limit_g(self, pg_k, pg):
+        print('pg', pg)
+        print('pg_k', pg_k)
         alpha_g = {}
+
         for e in self.instance.E:
-            print(pg)
-            print(pg_k)
             ptdf = np.asarray(self.instance.ptdf_g[e])
             gen_injection = ptdf @ pg_k
             pf_val = gen_injection - self.instance.load_injection[e].value
@@ -363,7 +365,7 @@ class SCDCOPFModelCCGA(SCOPFModel):
             assert np.isclose(np.dot(ptdf,pg) - self.instance.load_injection[e].value, self.instance.pf[e].value)
             # TODO delete pg from argument
 
-        print(alpha_g)
+        print('alpha_g', alpha_g)
         return alpha_g
         # exit()
             # ptdf = np.asarray()
