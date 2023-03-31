@@ -3,6 +3,7 @@ from .acopf import ACOPFModel
 from .dcopf import DCOPFModel
 from .dcopf_ptdf import DCOPFModelPTDF
 from .scdcopf import SCDCOPFModel
+from .scdcopf_ccga import SCDCOPFModelCCGA
 
 def build_model(model_type:str) -> OPFBaseModel:
     """ build optimal power flow model
@@ -28,6 +29,8 @@ def build_model(model_type:str) -> OPFBaseModel:
         model = DCOPFModelPTDF(model_type) 
     elif model_type == 'scdcopf':
         model = SCDCOPFModel(model_type)
+    elif model_type == 'scdcopf-ccga':
+        model = SCDCOPFModelCCGA(model_type)
     else:
         assert False
 
