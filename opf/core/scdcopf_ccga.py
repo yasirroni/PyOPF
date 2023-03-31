@@ -34,7 +34,7 @@ class SCDCOPFModelCCGA(SCOPFModel):
         self.model.slack = pyo.Set() # the slack buses
         self.model.ncost = pyo.Set() # the number of costs
         self.model.K_g = pyo.Set() # generator indices for generator contingency in consideration
-        self.model.K_e = pyo.Set() # branch (line) indices for line contingency in consideration
+        # self.model.K_e = pyo.Set() # branch (line) indices for line contingency in consideration
         self.model.E_K_g = pyo.Set(dimen=2) # to check flow limit for generator contingency in consideration
         self.model.E_K_e = pyo.Set(dimen=2) # to check flow limit for line contingency in consideration
         
@@ -57,12 +57,12 @@ class SCDCOPFModelCCGA(SCOPFModel):
         # # ====================
         self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=pg_bound_exp, within=pyo.Reals) # active generation (injection), continuous
         self.model.pg_kg = pyo.Var(self.model.G, self.model.K_g, bounds = pg_kg_bound_exp, within=pyo.Reals) # active generation when generator contingency occurs
-        self.model.pg_ke = pyo.Var(self.model.G, self.model.K_e, bounds = pg_ke_bound_exp, within=pyo.Reals) # active generation when line contingency occurs
+        # self.model.pg_ke = pyo.Var(self.model.G, self.model.K_e, bounds = pg_ke_bound_exp, within=pyo.Reals) # active generation when line contingency occurs
         self.model.n_kg = pyo.Var(self.model.K_g, bounds = (0.,1.), within=pyo.Reals) # global extent of generation increase when generator contingency occurs
-        self.model.n_ke = pyo.Var(self.model.K_e, bounds = (0.,1.), within=pyo.Reals) # global extent of generation increase when line contingency occurs
+        # self.model.n_ke = pyo.Var(self.model.K_e, bounds = (0.,1.), within=pyo.Reals) # global extent of generation increase when line contingency occurs
         
         self.model.rho_kg = pyo.Var(self.model.G, self.model.K_g, bounds = (0.,None), within=pyo.Reals) # downward deviation of pg from linear response
-        self.model.rho_ke = pyo.Var(self.model.G, self.model.K_e, bounds = (0.,None), within=pyo.Reals) # downward deviation of pg from linear response
+        # self.model.rho_ke = pyo.Var(self.model.G, self.model.K_e, bounds = (0.,None), within=pyo.Reals) # downward deviation of pg from linear response
         
         self.model.pf = pyo.Var(self.model.E, bounds=pf_bound_exp, within=pyo.Reals) # power flow for base case # it is neccesary to define power flow for line contingency
 
