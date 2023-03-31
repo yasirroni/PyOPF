@@ -51,3 +51,17 @@ def cnst_power_bal_ptdf_kg_exp(m, k):
 
 def cnst_power_bal_ptdf_ke_exp(m, k):
     return quicksum(m.pd[l] for l in m.L) == quicksum(m.pg_ke[g,k] for g in m.G)
+
+
+
+# ================================================================================
+# Only for SC-DC-OPF-CCGA 
+# ================================================================================
+def cnst_pf_kg_lazy_exp(m, e_k):
+    e,k = e_k
+    m.gen_injection = LinearExpression(constant=0, linear_coefs=m.ptdf_g[e], linear_vars=[m.pg_kg[g,k] for g in m.G])
+    return (-m.rate_c[e], m.gen_injection - m.load_injection[e], m.rate_c[e])
+
+def cnst_pf_ke_lazy_exp(m, e_k):
+    e,k = e_k
+    return (-m.rate_c[e], m.pf[e] + m.lodf[e,k]*m.pf[k], m.rate_c[e])
