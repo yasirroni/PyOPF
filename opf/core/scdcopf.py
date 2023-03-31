@@ -249,18 +249,10 @@ class SCDCOPFModel(SCOPFModel):
 
         if extract_contingency:
             pg_kg_sol = {}
-            pg_ke_sol = {}
-
             for g in self.instance.G:
                 for k in self.instance.K_g:
                     key = f"{g},{k}"
                     pg_kg_sol[key] = self.instance.pg_kg[g,k].value
             results['sol']['pg_kg'] = pg_kg_sol
-
-            for g in self.instance.G:
-                for k in self.instance.K_e:
-                    key = f"{g},{k}"
-                    pg_ke_sol[key] = self.instance.pg_ke[g,k].value
-            results['sol']['pg_ke'] = pg_ke_sol
 
         return None
