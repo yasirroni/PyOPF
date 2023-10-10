@@ -91,7 +91,7 @@ pip install opf
     license = {MIT},
     month = {3},
     title = {{PyOPF: Optimal Power Flow Modeling in Python}},
-    version = {0.2.0},
+    version = {0.3.0},
     year = {2023}
 }
 ```

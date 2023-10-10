@@ -6,7 +6,7 @@ authors:
     email: park.seonho@gmail.com
     orcid: https://orcid.org/0000-0002-4726-2441
 title: "PyOPF: Optimal Power Flow Modeling in Python"
-version: 0.2.0
+version: 0.3.0
 date-released: 2023-03-15
 license: MIT
 doi: 10.5281/zenodo.7772531	
