@@ -5,7 +5,6 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-import opf
 
 # The directory containing this file
 HERE = path.abspath(path.dirname(__file__))
@@ -41,7 +40,7 @@ packages = [
 # This call to setup() does all the work
 setup(
     name="opf",
-    version=opf.__version__,
+    version="0.3.1",
     description="PyOPF: Optimal Power Flow Modeling in Python",
     long_description=load_description(),
     long_description_content_type="text/markdown",
@@ -67,7 +66,7 @@ setup(
     ],
     packages=packages,
     include_package_data=True,
-    install_requires=load_requirements(),
+    install_requires=['typing-extensions', 'pyomo>=6.5.0', 'numpy>=1.22.3', 'scipy>=1.10.1'],
     project_urls={
         'Github': 'https://github.com/seonho-park/PyOPF'
     },
