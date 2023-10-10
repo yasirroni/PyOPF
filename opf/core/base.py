@@ -90,8 +90,8 @@ class NormalOPFModel(OPFBaseModel):
                      extract_contingency:bool = False) -> Dict[str,Any]:
         opt_results = optimizer.solve(self.instance, tee=tee)
 
-        results = {'termination_status': opt_results.solver.termination_condition, 
-                   'time': opt_results.solver.time,
+        results = {'termination_status': str(opt_results.solver.termination_condition), 
+                   'time': float(opt_results.solver.time),
                    'obj_cost': pyo.value(self.instance.obj_cost),
                    'sol': {}
                    }
