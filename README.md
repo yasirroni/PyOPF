@@ -42,12 +42,6 @@ pip install opf
     - Only use active power generations and bus voltage angles (for base DC-OPF) as variables.
     - Like AC-OPF, PGLib m-files can be taken as input.
 
-3. :x: SC-DC-OPF (Security Constrained DC Optimal Power Flow)
-    -  To be added
-
-4. :x: SC-AC-OPF (Security Constrained AC Optimal Power Flow)
-    -  To be added
-
 ## Warmstarting
 * `PyOPF` fully supports primal and dual warmstarting for IPOPT. Documentation is to be added.
     ```python
