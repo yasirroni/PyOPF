@@ -13,8 +13,6 @@ def build_model(model_type:str) -> OPFBaseModel:
                           acopf:        AC-OPF
                           dcopf:        DC-OPF 
                           dcopf-ptdf:   DC-OPF based on PTDF matrix
-                          scdcopf:      SC-DC-OPF (extensive formulation)
-                          scdcopf-ccga: SC-DC-OPF based on CCGA    
 
     Returns:
         OPFBaseModel: abstract power model
@@ -27,10 +25,6 @@ def build_model(model_type:str) -> OPFBaseModel:
         model = DCOPFModel(model_type)
     elif model_type == 'dcopf-ptdf':
         model = DCOPFModelPTDF(model_type) 
-    elif model_type == 'scdcopf':
-        model = SCDCOPFModel(model_type)
-    elif model_type == 'scdcopf-ccga':
-        model = SCDCOPFModelCCGA(model_type)
     else:
         assert False
 
