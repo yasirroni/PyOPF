@@ -21,6 +21,9 @@ pip install opf
     + numpy>=1.22.3
     + ipopt>=1.0.3
 
+> **Note**
+>
+> See [`docs\install.md`](docs\install.md) for more detailed installation step,
 
 ## Formulations
 1. :o: AC-OPF (AC Optimal Power Flow): 

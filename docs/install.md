@@ -3,8 +3,20 @@
 ## PyOPF
 
 ```shell
+pip install opf
+```
+
+For development, use,
+
+```shell
 pip install -e .
 ```
+
+* Dependencies
+  * python>=3.8
+  * pyomo>=6.5.0
+  * numpy>=1.22.3
+  * ipopt>=1.0.3
 
 ## ipopt
 
