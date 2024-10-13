@@ -76,6 +76,9 @@ def parse_matpower(lines: List[str]) -> Dict[str,Any]:
 
     nlines = len(lines)
     lineidx = 0
+
+    mpc_pattern = re.compile(r"^\s*mpc\.(?P<attribute>\w+)\s*=\s*")
+
     while lineidx < nlines:
         # print(lineidx)
         line = lines[lineidx]
@@ -88,23 +91,29 @@ def parse_matpower(lines: List[str]) -> Dict[str,Any]:
         elif 'mpc.version' in line:
             data['version'] = int(line[line.find('=')+3:line.rfind(';')-1])
             lineidx += 1
-        elif 'mpc.baseMVA' in line:
-            data['baseMVA'] = float(line[line.find('=')+2:line.rfind(';')])
-            lineidx += 1
-        elif 'mpc.bus' in line:
-            buses, lineidx = _extract_mp_data(lines, lineidx, MP_BUS_COLUMNS, 'bus')
-            data['bus'] = buses
-        elif 'mpc.gencost' in line:
-            gencosts, lineidx = _extract_mp_gencost_data(lines, lineidx)
-            data['gencost'] = gencosts
-        elif 'mpc.gen' in line:
-            gens, lineidx = _extract_mp_data(lines, lineidx, MP_GEN_COLUMNS, 'gen')
-            data['gen'] = gens
-        elif 'mpc.branch' in line:
-            branches, lineidx = _extract_mp_data(lines, lineidx, MP_BRANCH_COLUMNS, 'branch')
-            data['branch'] = branches
         else:
-            lineidx += 1
+            match = mpc_pattern.search(line)
+            if match:
+                attribute = match.group('attribute')
+                if attribute == 'baseMVA':
+                    data['baseMVA'] = float(line[line.find('=')+2:line.rfind(';')])
+                    lineidx += 1
+                elif attribute == 'bus':
+                    buses, lineidx = _extract_mp_data(lines, lineidx, MP_BUS_COLUMNS, 'bus')
+                    data['bus'] = buses
+                elif attribute == 'gencost':
+                    gencosts, lineidx = _extract_mp_gencost_data(lines, lineidx)
+                    data['gencost'] = gencosts
+                elif attribute == 'gen':
+                    gens, lineidx = _extract_mp_data(lines, lineidx, MP_GEN_COLUMNS, 'gen')
+                    data['gen'] = gens
+                elif attribute == 'branch':
+                    branches, lineidx = _extract_mp_data(lines, lineidx, MP_BRANCH_COLUMNS, 'branch')
+                    data['branch'] = branches
+                else:
+                    lineidx += 1
+            else:
+                lineidx += 1
 
     return data
 
