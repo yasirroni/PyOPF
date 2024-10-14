@@ -59,12 +59,13 @@ pip install opf
 - Running the following AC-OPF problem
     ```python
     import opf
+    from pypglib import pglib_opf_case5_pjm
 
     # build abstract model for AC-OPF
     model = opf.build_model('acopf')
 
     # load pglib input model file
-    network = opf.parse_file("./data/pglib_opf_case5_pjm.m")
+    network = opf.parse_file(pglib_opf_case5_pjm)
 
     # create the model instance (concrete model)
     model.instantiate(network)
