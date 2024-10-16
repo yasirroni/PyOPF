@@ -56,6 +56,11 @@ pip install opf
     conda install -c conda-forge ipopt
     ```
 
+- For easier access of PGLib data, use [PyPGLib](https://github.com/yasirroni/PyPGLib), as follows:
+    ```
+    pip install pypglib
+    ```
+
 - Running the following AC-OPF problem
     ```python
     import opf
@@ -71,7 +76,12 @@ pip install opf
     model.instantiate(network)
 
     # solve the problem
-    result = model.solve(solver_option={'print_level' : 5, 'linear_solver': 'ma27'}, tee=True)
+    solver_option = {
+        'print_level' : 5,
+        'linear_solver': 'ma27',  # try removing this if it cause 'libhsl.dylib' error
+    }
+    solver = 'ipopt'
+    result = model.solve(solver=solver, solver_option=solver_option, tee=True)
 
     # check the optimal objective value
     print('obj value', result['obj_cost'])
