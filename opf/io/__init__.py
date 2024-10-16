@@ -1,1 +1,1 @@
-from .io import parse_file, export_network
+from .io import parse_file, mpc2pyopf, export_network

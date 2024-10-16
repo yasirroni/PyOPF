@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, BinaryIO, Callable, cast, Dict, Optional, Type, Tuple, Union, IO
 from typing_extensions import TypeAlias
 
-from opf.io.matpower import parse_matpower, mp2data
+from opf.io.matpower import parse_matpower, mp2data, mpc2mp_data
 from opf.io.common import make_per_unit #, simplify_cost_terms
 
 FILE_LIKE: TypeAlias = Union[str, os.PathLike]
@@ -24,7 +24,7 @@ def parse_file(f:FILE_LIKE) -> None:
     except (io.UnsupportedOperation, AttributeError) as e:
         msg = (str(e) + ". The file {} is not supported for parsing"%str(f))
         raise type(e)(msg)
-    
+
 
 def _parse_file(f):
     lines = f.readlines()
@@ -36,6 +36,15 @@ def _parse_file(f):
     # simplify_cost_terms(data_dict)
     data_dict['preprocessed'] = False
     return data_dict
+
+
+def mpc2pyopf(mpc):
+    mp_data = mpc2mp_data(mpc)
+    mp_data['bus']
+    network = mp2data(mp_data)
+    make_per_unit(network)
+    network['preprocessed'] = False
+    return network
 
 
 def export_network(obj:Dict[str,Any], f:FILE_LIKE) -> None:

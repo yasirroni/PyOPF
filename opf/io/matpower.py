@@ -56,6 +56,12 @@ MP_BRANCH_COLUMNS = [
     ("mu_angmin", float), ("mu_angmax", float)
 ]
 
+MP_COLUMNS = {
+    'bus': MP_BUS_COLUMNS,
+    'gen': MP_GEN_COLUMNS,
+    'branch': MP_BRANCH_COLUMNS,
+}
+
 def parse_matpower(lines: List[str]) -> Dict[str,Any]:
     """ parse MATPOWER formatted m-file. The field 'mpc.areas' is excluded because it is not used in AC-OPF.
 
@@ -309,4 +315,50 @@ def _list2dict(data):
             entries_dict[str(id)] = entry
         data[k] = entries_dict # convert list to dict
 
-
+def mpc2mp_data(mpc, name=''):
+    mp_data = {
+        'source_type': 'matpower',
+        'name': name,
+    }
+    for attribute in mpc:
+        if attribute in ('bus', 'branch', 'gen'):
+            mp_data[attribute] = [
+                {MP_COLUMNS[attribute][i][0]: MP_COLUMNS[attribute][i][1](val)
+                 for i, val in enumerate(row)}
+                 for row in mpc[attribute]
+            ]
+            if attribute == 'bus':
+                for id, row in enumerate(mp_data[attribute], 1):
+                    row['id'] = int(row['bus_i'])
+            elif attribute == 'gen':
+                for id, row in enumerate(mp_data[attribute], 1):
+                    row['gen_bus'] = str(int(float(row['gen_bus'])))
+                    row['id'] = id
+            else:  # branch
+                for id, row in enumerate(mp_data[attribute], 1):
+                    row['f_bus'] = str(int(float(row['f_bus'])))
+                    row['t_bus'] = str(int(float(row['t_bus'])))
+                    row['id'] = id
+        elif attribute == 'gencost':
+            mp_data[attribute] = []
+            for id, row in enumerate(mpc[attribute], 1):
+                model = int(row[0])
+                if model != 2:
+                    msg = (f"Generator cost model {model} is not supported. It should"
+                            " be model=2.")
+                    raise ValueError(msg)
+                startup = float(row[1])
+                shutdown = float(row[2])
+                ncost = int(row[3])
+                costs = [float(row[4+c]) for c in range(ncost)]
+                entry = {
+                    'id': int(id),
+                    'model': model,
+                    'startup': startup,
+                    'shutdown': shutdown,
+                    'cost': costs
+                }
+                mp_data[attribute].append(entry)
+        else:
+            mp_data[attribute] = mpc[attribute]
+    return mp_data
