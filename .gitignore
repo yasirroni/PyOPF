@@ -176,6 +176,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+octave-workspace
 
 # Spyder project settings
 .spyderproject
