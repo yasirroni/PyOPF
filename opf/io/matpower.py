@@ -321,6 +321,7 @@ def mpc2mp_data(mpc, name=''):
         'name': name,
     }
     for attribute in mpc:
+        # TODO: this code is based on _extract_mp_data that use 1-indexing
         if attribute in ('bus', 'branch', 'gen'):
             mp_data[attribute] = [
                 {MP_COLUMNS[attribute][i][0]: MP_COLUMNS[attribute][i][1](val)
