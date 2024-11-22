@@ -23,7 +23,7 @@ class ACOPFModel(NormalOPFModel):
         self.model.E = pyo.Set() # branch indices
         self.model.L = pyo.Set() # load indices
         self.model.S = pyo.Set() # shunt indices
-        self.model.slack = pyo.Set() # the slack buses
+        self.model.slack_bus = pyo.Set() # the slack buses
         self.model.ncost = pyo.Set() # the number of costs
 
         self.model.gen_per_bus = pyo.Set(self.model.B, within=self.model.G)
@@ -77,9 +77,9 @@ class ACOPFModel(NormalOPFModel):
         # # ====================
         # # II.    Variables
         # # ====================
-        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=pg_bound_exp, within=pyo.Reals) # active generation (injection), continuous
-        self.model.qg = pyo.Var(self.model.G, initialize=self.model.qg_init, bounds=qg_bound_exp, within=pyo.Reals) # reactive generation (injection), continuous
-        self.model.vm = pyo.Var(self.model.B, initialize=self.model.vm_init, bounds=vm_bound_exp, within=pyo.Reals) # voltage magnitude, continuous
+        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=bound_pg_exp, within=pyo.Reals) # active generation (injection), continuous
+        self.model.qg = pyo.Var(self.model.G, initialize=self.model.qg_init, bounds=bound_qg_exp, within=pyo.Reals) # reactive generation (injection), continuous
+        self.model.vm = pyo.Var(self.model.B, initialize=self.model.vm_init, bounds=bound_vm_exp, within=pyo.Reals) # voltage magnitude, continuous
         self.model.va = pyo.Var(self.model.B, initialize=self.model.va_init, within=pyo.Reals) # voltage angle, continuous
 
         self.model.pf_from = pyo.Var(self.model.E, initialize=self.model.pf_from_init, within=pyo.Reals) # active power flow (from), continuous
@@ -94,7 +94,7 @@ class ACOPFModel(NormalOPFModel):
         # ====================
         # III.a Voltage Angle at Slack Bus
         # ====================
-        self.model.cnst_slack_va = pyo.Constraint(self.model.slack, rule=cnst_slack_va_exp)
+        self.model.cnst_slack_va = pyo.Constraint(self.model.slack_bus, rule=cnst_slack_va_exp)
 
         # ====================
         # III.b Thermal Limits
@@ -188,7 +188,7 @@ class ACOPFModel(NormalOPFModel):
         # Bus
         vmmax, vmmin = {}, {}
         vm_init_val = {}
-        slack = []
+        slack_bus = []
         for bus_id in busids:
             bus = buses[bus_id]
             vmmax[bus_id] = bus['vmax']
@@ -196,7 +196,7 @@ class ACOPFModel(NormalOPFModel):
             vm_init_val[bus_id] = max(bus['vmin'], 1.)
             bustype = bus['bus_type']
             if bustype == 3:
-                slack.append(bus_id)
+                slack_bus.append(bus_id)
         
         # Branch
         rate_a = {}
@@ -262,7 +262,7 @@ class ACOPFModel(NormalOPFModel):
             'qf_from_init': qf_from_init,
             'qf_to_init': qf_to_init,
             'ncost': {None: np.arange(ncost)},
-            'slack': {None: slack},
+            'slack_bus': {None: slack_bus},
             'pd': pd,
             'qd': qd,
             'gs': gs,

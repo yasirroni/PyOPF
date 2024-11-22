@@ -5,6 +5,8 @@ import warnings
 
 from .utils import _preprocessing_network
 
+import numpy as np
+
 
 class OPFBaseModel(ABC):
     """ abstract class for defining the problem.
@@ -44,10 +46,8 @@ class OPFBaseModel(ABC):
             raise RuntimeError("instance has not included in the model class. Please execute `model.instantiate(network)` first to create it.")
         if isinstance(solver, str):
             optimizer = pyo.SolverFactory(solver.lower())
-        elif isinstance(solver, type(pyo.SolverFactory)):
-            optimizer = solver
         else:
-            raise RuntimeError("solver should be string (such as ipopt or gurobi) or `pyo.SolverFactory` object.")
+            optimizer = solver
 
         for k,v in solver_option.items():
             optimizer.options[k] = v
@@ -89,16 +89,23 @@ class NormalOPFModel(OPFBaseModel):
                      extract_dual:bool = False,
                      extract_contingency:bool = False) -> Dict[str,Any]:
         opt_results = optimizer.solve(self.instance, tee=tee)
+        termination_status = str(opt_results.solver.termination_condition)
 
-        results = {'termination_status': str(opt_results.solver.termination_condition), 
-                   'time': float(opt_results.solver.time),
-                   'obj_cost': pyo.value(self.instance.obj_cost),
-                   'sol': {}
-                   }
-
-        if results['termination_status'] in ['optimal', 'locallyOptimal', 'globallyOptimal']:
+        if termination_status in ['optimal', 'locallyOptimal', 'globallyOptimal']:
+            results = {
+                'termination_status': termination_status, 
+                'time': float(opt_results.solver.time),
+                'obj_cost': pyo.value(self.instance.obj_cost),
+                'sol': {}
+            }
             self._write_output(results, extract_dual, extract_contingency)
-        
+        else:
+            results = {
+                'termination_status': termination_status, 
+                'time': np.nan,
+                'obj_cost': np.nan,
+                'sol': {}
+            }
         return results
         
     def _write_output(self, results:Dict[str,Any], extract_dual:bool = False, extract_contingency:bool = False) -> None:

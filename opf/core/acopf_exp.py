@@ -1,14 +1,13 @@
 import pyomo.environ as pyo
 from pyomo.core.util import quicksum
-import math
 
-def pg_bound_exp(m, g):
+def bound_pg_exp(m, g):
     return (m.pgmin[g], m.pgmax[g])
 
-def qg_bound_exp(m, g):
+def bound_qg_exp(m, g):
     return (m.qgmin[g], m.qgmax[g])
 
-def vm_bound_exp(m, b):
+def bound_vm_exp(m, b):
     return (m.vmmin[b], m.vmmax[b])
 
 def cnst_slack_va_exp(m, s):

@@ -4,7 +4,7 @@ import numpy as np
 
 from .base import NormalOPFModel
 from .dcopf_exp import cnst_power_bal_ptdf_exp, cnst_pf_ptdf_exp
-from .acopf_exp import pg_bound_exp, obj_cost_exp
+from .acopf_exp import bound_pg_exp, obj_cost_exp
 from .ptdf import compute_ptdf
 
 
@@ -39,7 +39,7 @@ class DCOPFModelPTDF(NormalOPFModel):
         # # ====================
         # # II.    Variables
         # # ====================
-        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=pg_bound_exp, within=pyo.Reals) # active generation (injection), continuous
+        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=bound_pg_exp, within=pyo.Reals) # active generation (injection), continuous
 
         # ====================
         # III.   Constraints

@@ -2,6 +2,7 @@ from .base import OPFBaseModel
 from .acopf import ACOPFModel
 from .dcopf import DCOPFModel
 from .dcopf_ptdf import DCOPFModelPTDF
+from .ucacopf import UCACOPFModel
 
 def build_model(model_type:str) -> OPFBaseModel:
     """ build optimal power flow model
@@ -23,6 +24,8 @@ def build_model(model_type:str) -> OPFBaseModel:
         model = DCOPFModel(model_type)
     elif model_type == 'dcopf-ptdf':
         model = DCOPFModelPTDF(model_type) 
+    elif model_type == 'ucacopf':
+        model = UCACOPFModel(model_type)
     else:
         assert False
 

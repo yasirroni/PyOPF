@@ -5,7 +5,7 @@ import math
 
 from .base import NormalOPFModel
 from .dcopf_exp import *
-from .acopf_exp import pg_bound_exp, obj_cost_exp
+from .acopf_exp import bound_pg_exp, obj_cost_exp
 
 
 class DCOPFModel(NormalOPFModel):
@@ -49,7 +49,7 @@ class DCOPFModel(NormalOPFModel):
         # # ====================
         # # II.    Variables
         # # ====================
-        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=pg_bound_exp, within=pyo.Reals) # active generation (injection), continuous
+        self.model.pg = pyo.Var(self.model.G, initialize=self.model.pg_init, bounds=bound_pg_exp, within=pyo.Reals) # active generation (injection), continuous
         self.model.va = pyo.Var(self.model.B, initialize=self.model.va_init, within=pyo.Reals) # voltage angle, continuous
         self.model.pf = pyo.Var(self.model.E, initialize=self.model.pf_init, bounds=pf_bound_exp, within=pyo.Reals) # active flow (at each branch)
 
